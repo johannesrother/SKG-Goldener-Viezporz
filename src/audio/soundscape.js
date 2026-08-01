@@ -5,6 +5,7 @@ export class Soundscape {
     this.master = null;
     this.marketStarted = false;
     this.marketTimer = null;
+    this.zone = 'hauptmarkt';
   }
 
   activate() {
@@ -69,6 +70,20 @@ export class Soundscape {
       this.marketTimer = window.setTimeout(loop, 2300 + Math.random() * 2600);
     };
     window.setTimeout(loop, 420);
+  }
+
+  // Browser-safe procedural placeholders: zones are silent until the first
+  // start click, then fade rather than requiring external audio downloads.
+  setZone(zone) {
+    if (!this.context || !this.master || !zone || zone === this.zone) return;
+    this.zone = zone;
+    const now = this.context.currentTime;
+    const target = this.volume * (zone === 'domfreihof' ? .085 : zone === 'sternstrasse' ? .105 : .12);
+    this.master.gain.cancelScheduledValues(now);
+    this.master.gain.setValueAtTime(this.master.gain.value, now);
+    this.master.gain.linearRampToValueAtTime(target, now + .65);
+    if (zone === 'domfreihof') this.chime([392, 523.25, 659.25]);
+    if (zone === 'sternstrasse') this.chime([329.63, 392]);
   }
 
   chime(tones = [523.25, 659.25]) {
