@@ -561,6 +561,121 @@ function addFountain(parent) {
   return fountain;
 }
 
+// A Romanesque, sandstone interpretation of Trier Cathedral. Its broad nave,
+// paired massing and restrained tower caps deliberately avoid the silhouette of
+// a generic Gothic/fantasy cathedral.
+function addTrierDom(parent, x, z, quality) {
+  const dom = new THREE.Group();
+  dom.name = 'Trierer Dom – Domfreihof';
+  dom.position.set(x, 0, z);
+  dom.rotation.y = Math.PI;
+  const sandstone = 0xc99f72;
+  const lightStone = 0xe0bf91;
+  const darkRoof = 0x5a6267;
+  addBox(dom, { w: 14.2, h: 10.1, d: 10.8, color: sandstone, roughness: .7 });
+  addBox(dom, { y: 8.5, w: 14.7, h: .24, d: 11.15, color: lightStone });
+  dom.add(makeRoof(14.2, 10.8, 10.1, darkRoof));
+  // Broad transept and a semi-octagonal eastern choir make the footprint feel
+  // specific to the Romanesque Trier landmark rather than a narrow church.
+  addBox(dom, { y: 3.15, w: 18.2, h: 6.2, d: 4.3, color: 0xd4ae80 });
+  dom.add(makeRoof(18.2, 4.3, 6.2, darkRoof));
+  const choir = new THREE.Group();
+  choir.position.set(0, 0, 5.95);
+  addCylinder(choir, { rTop: 4.15, rBottom: 4.15, h: 8.4, sides: 8, color: 0xd2ab7d });
+  choir.add(makeRoof(8.1, 6.2, 8.35, darkRoof));
+  dom.add(choir);
+  for (const towerX of [-5.45, 5.45]) {
+    const tower = new THREE.Group();
+    tower.position.set(towerX, 0, -5.9);
+    addBox(tower, { w: 3.65, h: 16.1, d: 4.25, color: lightStone, roughness: .68 });
+    for (const band of [4.4, 9.0, 13.2]) addBox(tower, { y: band, w: 3.95, h: .16, d: 4.52, color: 0xb98d62 });
+    for (const y of [6.1, 10.7, 13.8]) {
+      addWindow(tower, -.72, y, -2.18, -1, .55, y > 12 ? .95 : .72, false);
+      addWindow(tower, .72, y, -2.18, -1, .55, y > 12 ? .95 : .72, false);
+    }
+    for (let crenel = -1.35; crenel <= 1.35; crenel += .55) addBox(tower, { x: crenel, y: 15.95, z: -1.7, w: .26, h: .5, d: .32, color: 0xb78960 });
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(2.15, 2.35, 4), material(0x697278, { map: getRoofTexture(), roughness: .85 }));
+    cap.position.y = 17.55;
+    cap.rotation.y = Math.PI / 4;
+    cap.castShadow = true;
+    tower.add(cap);
+    dom.add(tower);
+  }
+  const front = -5.48;
+  addBox(dom, { y: .02, z: front - .08, w: 8.2, h: 1.12, d: .28, color: 0xb98960 });
+  for (const doorX of [-2.4, 0, 2.4]) {
+    const portal = new THREE.Mesh(new THREE.BoxGeometry(1.45, 2.6, .16), material(0x4b3b32, { roughness: .46 }));
+    portal.position.set(doorX, 1.3, front - .1);
+    dom.add(portal);
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(.72, .12, 8, 18, Math.PI), material(0xb7865e));
+    arch.position.set(doorX, 2.58, front - .2);
+    dom.add(arch);
+  }
+  const rose = new THREE.Mesh(new THREE.CircleGeometry(.82, 16), material(0x9ec7d1, { emissive: 0x446a75, emissiveIntensity: .4, roughness: .3 }));
+  rose.position.set(0, 6.65, front - .13);
+  dom.add(rose);
+  for (const xOffset of [-4.5, -2.5, 2.5, 4.5]) addWindow(dom, xOffset, 5.1, front, -1, .58, 1.18, true);
+  if (quality !== 'low') {
+    for (let candle = -3; candle <= 3; candle += 1) {
+      const glow = new THREE.PointLight(0xffb862, .2, 6, 2);
+      glow.position.set(candle * 1.4, 3.1, front - .7);
+      dom.add(glow);
+    }
+  }
+  addLabel(dom, 'HOHER DOM ZU TRIER', 0, 3.85, front - .46, 1.16, '#efcb7d');
+  parent.add(dom);
+  return dom;
+}
+
+function addSternstrasse(parent) {
+  const street = new THREE.Group();
+  street.name = 'Sternstraße – Verbindung zum Domfreihof';
+  // The street begins at the east-north corner of the Hauptmarkt and opens
+  // northeast toward the Domfreihof, matching the real spatial relationship.
+  const road = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 23.5), material(0xd8bd91, { map: loadCobblestones(), roughness: .9 }));
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(27.4, -.015, 25.2);
+  street.add(road);
+  const left = [
+    [22.1, 17.4, 4.3, 4.9, 201, 'STERN 1'], [22.0, 22.7, 3.7, 4.2, 202, 'BUCH & KULTUR'],
+    [22.1, 27.5, 4.5, 4.7, 203, null], [22.0, 32.0, 3.9, 4.4, 204, 'KAFFEE'],
+  ];
+  const right = [
+    [32.7, 17.8, 4.1, 4.5, 211, 'STERNSTRASSE'], [32.8, 22.6, 4.4, 4.7, 212, null],
+    [32.6, 27.6, 3.9, 4.25, 213, 'TRIER'], [32.7, 32.1, 4.2, 4.8, 214, 'STADTPLAN'],
+  ];
+  left.forEach(([bx, bz, w, h, seed, sign]) => createTownhouse(street, { x: bx, z: bz, w, h, d: 3.5, facade: choose([0xe9dfcf, 0xd4907d, 0xf0c78d, 0xc98772], seed), roof: 0x687076, seed, rotation: -Math.PI / 2, sign }));
+  right.forEach(([bx, bz, w, h, seed, sign]) => createTownhouse(street, { x: bx, z: bz, w, h, d: 3.5, facade: choose([0xebdfcc, 0xc97b6d, 0xe4b487, 0xd8c3a3], seed), roof: 0x626b72, seed, rotation: Math.PI / 2, sign }));
+  [[24.0, 19.3], [30.8, 24.8], [24.0, 30.2], [30.7, 31.0]].forEach(([px, pz], index) => {
+    addPlanter(street, px, pz, index % 2 ? Math.PI / 2 : 0, choose(PALETTE.flower, index + 410));
+    addLamp(street, index % 2 ? px - .45 : px + .45, pz + .45, false);
+  });
+  [[24.15, 22.2, .3], [30.7, 28.7, -.35], [24.1, 33.2, .2]].forEach(([px, pz, rotation]) => addBicycle(street, px, pz, rotation));
+  parent.add(street);
+  return street;
+}
+
+function addDomfreihof(parent, quality) {
+  const court = new THREE.Group();
+  court.name = 'Domfreihof – Trier';
+  // An intentionally roomier, calmer plane than the market, framed by the Dom.
+  const surface = new THREE.Mesh(new THREE.PlaneGeometry(30, 24), material(0xe2cba4, { map: loadCobblestones(), roughness: .9 }));
+  surface.rotation.x = -Math.PI / 2;
+  surface.position.set(40, -.012, 42);
+  court.add(surface);
+  addTrierDom(court, 40, 51.2, quality);
+  [
+    [25.4, 37.2, 4.4, 4.35, 231, 'DOMFREIHOF'], [25.2, 44.2, 4.2, 4.6, 232, null],
+    [54.5, 37.4, 4.6, 4.8, 233, 'CAFÉ DOM'], [54.5, 44.2, 4.1, 4.4, 234, null],
+  ].forEach(([bx, bz, w, h, seed, sign]) => createGabledHouse(court, { x: bx, z: bz, w, h, d: 4.3, facade: choose([0xe5dac8, 0xd3ab80, 0xe9d6ba], seed), roof: 0x677078, seed, sign, rotation: bx < 40 ? -Math.PI / 2 : Math.PI / 2, ornate: seed % 2 === 0 }));
+  [[28.7, 36.1], [29.5, 47.3], [51.8, 35.3], [52.1, 47.4], [34.4, 34.7]].forEach(([tx, tz], index) => addTree(court, tx, tz, .9 + (index % 2) * .1, index + 510));
+  [[30.4, 40, Math.PI / 2], [49.2, 39.5, -Math.PI / 2], [35.7, 46.8, 0], [45.5, 35.1, 0]].forEach(([bx, bz, rot]) => addBench(court, bx, bz, rot));
+  [[28.2, 42.3, .3], [52.2, 40.8, -.4], [33.7, 36.5, .1]].forEach(([px, pz, rot]) => addBicycle(court, px, pz, rot));
+  [[31.2, 35.7], [49.7, 35.8], [30.2, 45.8], [50.3, 45.8]].forEach(([px, pz], index) => addPlanter(court, px, pz, index % 2 ? Math.PI / 2 : 0, choose(PALETTE.flower, index + 550)));
+  parent.add(court);
+  return court;
+}
+
 function createCitizen(index, options = {}) {
   const scale = options.scale || (.82 + hash(index + 4) * .16);
   const person = new THREE.Group();
@@ -683,7 +798,7 @@ function loadCobblestones() {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(5.5, 4.75);
+  texture.repeat.set(7.8, 7.1);
   texture.anisotropy = 6;
   cobblestoneTexture = texture;
   return cobblestoneTexture;
@@ -720,12 +835,13 @@ function createPavingVariation() {
 
 function addPavingVariation(parent) {
   const overlay = new THREE.Mesh(
-    new THREE.PlaneGeometry(59, 45),
+    new THREE.PlaneGeometry(84, 76),
     new THREE.MeshBasicMaterial({ map: createPavingVariation(), transparent: true, opacity: .9, depthWrite: false }),
   );
   overlay.rotation.x = -Math.PI / 2;
   overlay.position.y = -.017;
   parent.add(overlay);
+  return overlay;
 }
 
 export function createWorld(scene, quality = 'medium') {
@@ -736,7 +852,7 @@ export function createWorld(scene, quality = 'medium') {
   const pigeons = [];
 
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(59, 45),
+    new THREE.PlaneGeometry(84, 76),
     material(0xf3d39d, {
       map: loadCobblestones(),
       roughness: .92,
@@ -746,10 +862,10 @@ export function createWorld(scene, quality = 'medium') {
     }),
   );
   ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -.03;
+  ground.position.set(12, -.03, 16);
   ground.receiveShadow = true;
   root.add(ground);
-  addPavingVariation(root);
+  addPavingVariation(root).position.set(12, 0, 16);
 
   // Hauptmarkt façade sequence: St. Gangolf, the ornate gables and the Steipe are
   // the visual anchors from the supplied Trier photos. Street gaps form the Brot-
@@ -793,6 +909,11 @@ export function createWorld(scene, quality = 'medium') {
   addMarketStall(root, -9.6, -4.2, 'REGIONAL', 0x5c7d59, 0xf0d7a4);
   addStreetMusicCorner(root, -2.7, -7.35);
 
+  // Sprint 3: the market exits naturally into Sternstraße and then opens onto
+  // Domfreihof. All three spaces share this same scene and navigation surface.
+  addSternstrasse(root);
+  addDomfreihof(root, quality);
+
   // The little side alleys keep the market legible while making the plaza feel larger than real life.
   for (const [x, z, rotation] of [[-20.4, 8.5, .2], [-20.2, -7.9, -.2], [20.2, 8.3, -.3], [19.7, -8.4, .22]]) {
     addBicycle(root, x, z, rotation);
@@ -817,18 +938,24 @@ export function createWorld(scene, quality = 'medium') {
     [-18.8, 1.6, 'walk'], [18.2, -1.1, 'walk'], [4.3, -3.6, 'walk'], [-1.6, 7.2, 'walk'], [2.4, -8.4, 'walk'],
     [-11.7, 4.9, 'talk'], [-10.9, 5.2, 'laugh'], [11.7, 4.9, 'photo'], [13.0, 5.2, 'talk'],
     [17.1, 1.6, 'bike'], [-17.1, -1.9, 'bike'], [1.8, 7.9, 'walk'],
+    [25.8, 18.5, 'walk'], [28.5, 21.4, 'shop'], [25.7, 24.6, 'talk'], [29.2, 26.9, 'bike'],
+    [25.9, 29.4, 'photo'], [29.4, 31.6, 'walk'], [33.2, 35.8, 'photo'], [37.2, 38.4, 'tourist'],
+    [42.3, 38.6, 'tourist'], [46.4, 41.2, 'talk'], [34.2, 44.1, 'sit'], [47.7, 45.0, 'photo'],
+    [39.2, 46.4, 'look'], [43.5, 46.0, 'look'], [31.4, 39.0, 'walk'], [50.1, 39.4, 'bike'],
   ];
-  placement.forEach(([x, z, mode], index) => {
+  const activePlacement = quality === 'low' ? placement.filter((_, index) => index % 2 === 0) : placement;
+  activePlacement.forEach(([x, z, mode], index) => {
     const routes = [
       [new THREE.Vector3(-17, -0, -4.8), new THREE.Vector3(-3.4, 0, -4.9), new THREE.Vector3(5.8, 0, -4.2), new THREE.Vector3(18, 0, -3.8)],
       [new THREE.Vector3(-16, 0, 5.3), new THREE.Vector3(-4, 0, 6.5), new THREE.Vector3(7, 0, 5.6), new THREE.Vector3(17, 0, 5.8)],
+      [new THREE.Vector3(24.8, 0, 17), new THREE.Vector3(27.5, 0, 24), new THREE.Vector3(27.3, 0, 31), new THREE.Vector3(36, 0, 38)],
     ];
     const citizen = createCitizen(index, {
       mode,
       home: new THREE.Vector3(x, 0, z),
       route: routes[index % routes.length],
-      phone: mode === 'phone' || mode === 'photo',
-      drink: mode === 'drink' || mode === 'sit',
+      phone: mode === 'phone' || mode === 'photo' || mode === 'tourist',
+      drink: mode === 'drink' || mode === 'sit' || mode === 'shop',
       guitar: mode === 'music',
       bike: mode === 'bike',
       outfit: mode === 'serve' ? 0x293c37 : undefined,
@@ -857,9 +984,9 @@ export function createWorld(scene, quality = 'medium') {
   const shadowSize = quality === 'high' ? 2048 : quality === 'medium' ? 1024 : 512;
   sun.shadow.mapSize.set(shadowSize, shadowSize);
   sun.shadow.camera.left = -31;
-  sun.shadow.camera.right = 31;
-  sun.shadow.camera.top = 31;
-  sun.shadow.camera.bottom = -31;
+  sun.shadow.camera.right = 58;
+  sun.shadow.camera.top = 58;
+  sun.shadow.camera.bottom = -30;
   sun.shadow.bias = -.00025;
   scene.add(sun);
   const fill = new THREE.DirectionalLight(0x8bb0c5, .55);
@@ -900,10 +1027,14 @@ export function createWorld(scene, quality = 'medium') {
     visitorCount: citizens.length,
     update,
     clampPosition(position) {
-      position.x = THREE.MathUtils.clamp(position.x, -20.5, 20.5);
-      position.z = THREE.MathUtils.clamp(position.z, -11.8, 11.8);
+      position.x = THREE.MathUtils.clamp(position.x, -20.5, 52);
+      position.z = THREE.MathUtils.clamp(position.z, -11.8, 49);
       return position;
     },
-    getLocation() { return { name: 'Hauptmarkt' }; },
+    getLocation(position) {
+      if (position.z > 34 || (position.x > 32 && position.z > 31)) return { name: 'Domfreihof', zone: 'domfreihof' };
+      if (position.x > 20 && position.z > 13) return { name: 'Sternstraße', zone: 'sternstrasse' };
+      return { name: 'Hauptmarkt', zone: 'hauptmarkt' };
+    },
   };
 }
