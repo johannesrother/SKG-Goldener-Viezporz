@@ -93,7 +93,9 @@ export class GameEngine {
     const height = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(width, height, false);
     const aspect = width / height;
-    const viewHeight = width < 620 ? 18.8 : 24.2;
+    // A closer default makes the real façades, tables and visitors legible;
+    // the whole square remains available through the gentle scroll zoom.
+    const viewHeight = width < 620 ? 16.8 : 20.8;
     this.camera.left = (-viewHeight * aspect) / 2;
     this.camera.right = (viewHeight * aspect) / 2;
     this.camera.top = viewHeight / 2;
@@ -139,7 +141,7 @@ export class GameEngine {
       0,
       THREE.MathUtils.lerp(this.player.position.z, 2.5, .25),
     );
-    const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, 21.5, this.cameraFocus.z + 16);
+    const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, 18.5, this.cameraFocus.z + 16);
     this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
     this.camera.lookAt(this.cameraFocus.x, 0, this.cameraFocus.z);
   }
