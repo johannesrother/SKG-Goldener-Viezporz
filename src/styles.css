@@ -116,10 +116,13 @@ button { cursor: pointer; }
 .market-controls { right: max(1rem, env(safe-area-inset-right)); bottom: max(1.1rem, env(safe-area-inset-bottom)); display: flex; gap: .4rem; align-items: center; padding: .55rem .7rem; border-radius: 8px; color: #bcae91; font-size: .66rem; }
 .market-controls span:nth-child(odd) { color: #f1c669; font-weight: 800; letter-spacing: .04em; }
 .market-controls i { width: 1px; height: 1.25rem; margin: 0 .15rem; background: rgba(240, 198, 105, .26); }
+.route-mini { position: absolute; top: 5.25rem; right: max(1rem, env(safe-area-inset-right)); display: flex; align-items: center; gap: .28rem; padding: .48rem .62rem; color: #d7c7a4; border: 1px solid rgba(240, 198, 105, .28); border-radius: 8px; background: rgba(11, 21, 19, .72); font: 700 .51rem Inter, sans-serif; letter-spacing: .05em; pointer-events: none; }
+.route-mini i { width: 1rem; height: 2px; background: linear-gradient(90deg, #d7ad5f, rgba(215,173,95,.35)); }.route-mini em { position: absolute; top: -.34rem; left: 8%; color: #ffd66e; font-style: normal; font-size: .9rem; text-shadow: 0 0 8px #ffbd4e; transition: left .5s ease; }
 
 @media (max-width: 700px) {
   .market-card { top: .75rem; left: .75rem; width: 214px; padding: .68rem .75rem; }.market-card h2 { font-size: 1.05rem; }.market-card p:last-child { font-size: .65rem; }
   .market-location { top: auto; bottom: 6.8rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }.market-visitor { display: none; }
+  .route-mini { top: 4.7rem; right: .75rem; transform: scale(.88); transform-origin: top right; }
   .market-player { bottom: 1rem; left: .75rem; min-width: 150px; padding: .46rem .55rem; }.market-player > i { width: 36px; height: 36px; }.market-player b { font-size: .84rem; }
   .market-controls { display: none; }.mobile-controls { position: absolute; right: .85rem; bottom: max(.85rem, env(safe-area-inset-bottom)); z-index: 6; display: block; pointer-events: auto; }
   .mobile-controls .joystick { width: 84px; height: 84px; }.mobile-controls .joystick i { inset: 28px; }
