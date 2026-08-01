@@ -41,7 +41,8 @@ class HauptmarktSlice {
     const now = performance.now();
     if (now - this.lastUiUpdate < 350) return;
     this.lastUiUpdate = now;
-    this.ui.updateMarket(frame.visitorCount);
+    this.audio.setZone(frame.location?.zone || 'hauptmarkt');
+    this.ui.updateMarket(frame.visitorCount, frame.location);
   }
 }
 
