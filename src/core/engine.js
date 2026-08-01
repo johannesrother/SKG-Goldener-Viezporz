@@ -24,6 +24,7 @@ export class GameEngine {
     this.walkPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.destination = null;
     this.cameraFocus = new THREE.Vector3(0, 0, 0);
+    this.location = { name: 'Hauptmarkt', zone: 'hauptmarkt' };
     this.keys = new Set();
     this.joystick = new THREE.Vector2();
     this.running = true;
@@ -136,12 +137,14 @@ export class GameEngine {
   }
 
   updateCamera(delta) {
+    this.location = this.world.getLocation(this.player.position);
     this.cameraFocus.set(
       THREE.MathUtils.lerp(this.player.position.x, 0, .25),
       0,
       THREE.MathUtils.lerp(this.player.position.z, 2.5, .25),
     );
-    const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, 18.5, this.cameraFocus.z + 16);
+    const cameraHeight = this.location.zone === 'sternstrasse' ? 16.7 : this.location.zone === 'domfreihof' ? 21.2 : 18.5;
+    const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, cameraHeight, this.cameraFocus.z + 16);
     this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
     this.camera.lookAt(this.cameraFocus.x, 0, this.cameraFocus.z);
   }
@@ -154,7 +157,7 @@ export class GameEngine {
     this.updatePlayer(delta, time);
     this.updateCamera(delta);
     this.world.update(time, this.player.position);
-    this.callbacks.onFrame?.({ time, position: this.getPosition(), visitorCount: this.world.visitorCount });
+    this.callbacks.onFrame?.({ time, position: this.getPosition(), visitorCount: this.world.visitorCount, location: this.location });
     this.renderer.render(this.scene, this.camera);
   }
 
