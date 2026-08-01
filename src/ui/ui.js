@@ -99,7 +99,6 @@ export class GameUI {
   }
 
   begin(profile, visitors) {
-    this.app.querySelector('.market-shell').classList.add('market-play');
     this.elements.start.classList.add('hidden');
     this.elements.hud.classList.remove('hidden');
     this.elements.playerName.textContent = profile.name;
