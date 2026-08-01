@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import cobblestoneUrl from '../assets/hauptmarkt-cobblestone.png';
+import slateRoofUrl from '../assets/trier-slate-roof.png';
 
 const PALETTE = {
   sandstone: [0xd6b27f, 0xc99165, 0xe0c599, 0xb98762, 0xd3a876],
-  roof: [0x76584c, 0x66706d, 0x825a4e, 0x566563],
+  roof: [0xb0aaa1, 0xabb5b7, 0xb59a90, 0x9caeb1],
   leaf: [0x42613e, 0x587448, 0x35523c, 0x6d824e],
   flower: [0xd67175, 0xe9b35c, 0xc65c8c, 0xf2ded0],
   outfit: [0x3f5f50, 0x4d6075, 0x735348, 0x9a7041, 0x475348, 0x6f4243, 0x384654],
@@ -12,15 +13,16 @@ const PALETTE = {
 };
 
 const shared = {
-  leg: new THREE.CapsuleGeometry(0.085, 0.42, 3, 6),
-  torso: new THREE.CapsuleGeometry(0.25, 0.47, 4, 8),
-  head: new THREE.SphereGeometry(0.225, 10, 8),
-  hair: new THREE.SphereGeometry(0.232, 10, 6, 0, Math.PI * 2, 0, Math.PI / 1.9),
-  arm: new THREE.CapsuleGeometry(0.055, 0.38, 3, 6),
-  pigeon: new THREE.SphereGeometry(0.075, 7, 5),
+  leg: new THREE.CapsuleGeometry(0.085, 0.42, 5, 8),
+  torso: new THREE.CapsuleGeometry(0.25, 0.47, 6, 12),
+  head: new THREE.SphereGeometry(0.225, 14, 11),
+  hair: new THREE.SphereGeometry(0.232, 14, 9, 0, Math.PI * 2, 0, Math.PI / 1.9),
+  arm: new THREE.CapsuleGeometry(0.055, 0.38, 5, 8),
+  pigeon: new THREE.SphereGeometry(0.075, 9, 7),
 };
 
 let roofTexture;
+let cobblestoneTexture;
 
 function material(color, options = {}) {
   return new THREE.MeshStandardMaterial({ color, roughness: 0.76, metalness: 0.02, ...options });
@@ -108,29 +110,12 @@ function makeRoof(w, d, wallHeight, color) {
 
 function getRoofTexture() {
   if (roofTexture) return roofTexture;
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const context = canvas.getContext('2d');
-  context.fillStyle = '#75645c';
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  for (let row = -1; row < 18; row += 1) {
-    const offset = row % 2 ? -18 : 0;
-    for (let column = -1; column < 12; column += 1) {
-      const x = column * 48 + offset;
-      const y = row * 31;
-      context.fillStyle = (row + column) % 3 ? '#8d776b' : '#615853';
-      context.fillRect(x + 2, y + 2, 45, 28);
-      context.strokeStyle = 'rgba(255, 232, 194, .18)';
-      context.lineWidth = 1;
-      context.strokeRect(x + 2, y + 2, 45, 28);
-    }
-  }
-  roofTexture = new THREE.CanvasTexture(canvas);
+  roofTexture = new THREE.TextureLoader().load(slateRoofUrl);
   roofTexture.colorSpace = THREE.SRGBColorSpace;
   roofTexture.wrapS = THREE.RepeatWrapping;
   roofTexture.wrapT = THREE.RepeatWrapping;
-  roofTexture.repeat.set(2.3, 2.3);
+  roofTexture.repeat.set(2.1, 2.1);
+  roofTexture.anisotropy = 6;
   return roofTexture;
 }
 
@@ -159,7 +144,7 @@ function addPlanter(parent, x, z, rotation = 0, flowers = 0xd67175) {
   addBox(planter, { w: 0.95, h: 0.28, d: 0.42, color: 0x76513b });
   addBox(planter, { y: 0.28, w: 0.78, h: 0.08, d: 0.32, color: 0x453827 });
   for (let i = 0; i < 4; i += 1) {
-    const leaf = new THREE.Mesh(new THREE.IcosahedronGeometry(0.16, 1), material(choose(PALETTE.leaf, i + x * 5)));
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 8), material(choose(PALETTE.leaf, i + x * 5)));
     leaf.position.set(-0.29 + i * 0.19, 0.48 + (i % 2) * 0.06, (i % 2 ? .08 : -.06));
     planter.add(leaf);
     const bloom = new THREE.Mesh(new THREE.SphereGeometry(0.07, 7, 5), material(i % 2 ? flowers : 0xf4c86f));
@@ -223,14 +208,139 @@ function createTownhouse(parent, spec) {
   return building;
 }
 
+// The next three landmarks are deliberately modelled from the distinctive rhythm of
+// Trier's Hauptmarkt: the Steipe, St. Gangolf's tower and the ornate gabled houses.
+// They make the square legible as Trier rather than a generic old town.
+function addGableFace(parent, { w, wallHeight, gableHeight, front, color, timber = false }) {
+  const positions = new Float32Array([
+    -w / 2, wallHeight, front, w / 2, wallHeight, front, 0, wallHeight + gableHeight, front,
+  ]);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.computeVertexNormals();
+  const gable = new THREE.Mesh(geometry, material(color, { roughness: .68, side: THREE.DoubleSide }));
+  parent.add(gable);
+  if (timber) {
+    addBox(parent, { y: wallHeight + gableHeight * .38, z: front - .025, w: w * .72, h: .07, d: .045, color: 0x563a2d });
+    const diagonal = new THREE.Mesh(new THREE.BoxGeometry(w * .58, .06, .045), material(0x563a2d));
+    diagonal.position.set(0, wallHeight + gableHeight * .43, front - .045);
+    diagonal.rotation.z = -.64;
+    parent.add(diagonal);
+  }
+}
+
+function addArcade(parent, x, z, width = .72, height = 1.35, side = -1, color = 0x7d5b45) {
+  const depth = .08;
+  addBox(parent, { x: x - width / 2, y: .02, z, w: .12, h: height * .72, d: depth, color });
+  addBox(parent, { x: x + width / 2, y: .02, z, w: .12, h: height * .72, d: depth, color });
+  const arch = new THREE.Mesh(new THREE.TorusGeometry(width / 2, .065, 6, 18, Math.PI), material(color, { roughness: .55 }));
+  arch.position.set(x, height * .72, z + side * .02);
+  arch.rotation.z = 0;
+  parent.add(arch);
+}
+
+function createGabledHouse(parent, spec) {
+  const { x, z, w, h, d = 3.8, facade, roof = 0xaab2b3, seed, sign, rotation = 0, ornate = false } = spec;
+  const house = new THREE.Group();
+  house.position.set(x, 0, z);
+  house.rotation.y = rotation;
+  addBox(house, { w, h, d, color: facade, roughness: .71 });
+  const front = -d / 2 - .035;
+  for (let story = 0; story < 3; story += 1) {
+    const y = 1.18 + story * 1.02;
+    for (let col = 0; col < Math.max(2, Math.floor(w / .72)); col += 1) {
+      const colW = w / Math.max(2, Math.floor(w / .72));
+      addWindow(house, -w / 2 + colW * (col + .5), y, front, -1, Math.min(.43, colW - .16), .58, true);
+    }
+    if (story < 2) addBox(house, { y: y + .38, z: front - .035, w: w * .94, h: .055, d: .06, color: ornate ? 0xf1d4b4 : 0xe3c59a });
+  }
+  addGableFace(house, { w: w + .1, wallHeight: h, gableHeight: Math.min(2.15, w * .43), front: front - .05, color: facade, timber: ornate });
+  const roofMesh = makeRoof(w, d, h, roof);
+  house.add(roofMesh);
+  const portal = new THREE.Mesh(new THREE.BoxGeometry(.72, 1.18, .09), material(ornate ? 0x74473a : 0x4a3d36, { roughness: .42 }));
+  portal.position.set(ornate ? -.16 : .12, .59, front - .07);
+  house.add(portal);
+  if (ornate) {
+    const crest = new THREE.Mesh(new THREE.CircleGeometry(.17, 12), material(0xf0c57e, { metalness: .22, roughness: .4 }));
+    crest.position.set(0, h + .58, front - .085);
+    house.add(crest);
+  }
+  if (sign) addLabel(house, sign, 0, 1.72, front - .14, Math.min(1.02, w * .22));
+  parent.add(house);
+  return house;
+}
+
+function addSteipe(parent, x, z) {
+  const steipe = new THREE.Group();
+  steipe.name = 'Steipe – Trierer Hauptmarkt';
+  steipe.position.set(x, 0, z);
+  const facade = 0xf0e4cf;
+  const accent = 0x9a483d;
+  addBox(steipe, { w: 6.2, h: 5.55, d: 3.9, color: facade, roughness: .63 });
+  const front = -2.01;
+  for (let bay = -2; bay <= 2; bay += 1) addArcade(steipe, bay * 1.12, front - .045, .78, 1.45, -1, accent);
+  for (let story = 0; story < 3; story += 1) {
+    for (let bay = -2; bay <= 2; bay += 1) {
+      addWindow(steipe, bay * 1.08, 2.08 + story * .9, front - .01, -1, .5, .58, true);
+      if (story === 0) {
+        const hood = new THREE.Mesh(new THREE.ConeGeometry(.35, .17, 4), material(accent));
+        hood.position.set(bay * 1.08, 2.43, front - .12);
+        hood.rotation.x = Math.PI / 4;
+        steipe.add(hood);
+      }
+    }
+  }
+  addBox(steipe, { y: 5.4, w: 6.45, h: .17, d: 4.1, color: 0xd5bc99 });
+  for (let crenel = -2.65; crenel <= 2.65; crenel += .66) addBox(steipe, { x: crenel, y: 5.57, z: front + .15, w: .3, h: .35, d: .32, color: accent });
+  steipe.add(makeRoof(6.2, 3.9, 5.55, 0xa8b0b1));
+  for (const towerX of [-2.52, 2.52]) {
+    const turret = new THREE.Group();
+    turret.position.set(towerX, 5.53, front + .18);
+    addCylinder(turret, { rTop: .29, rBottom: .34, h: .68, sides: 8, color: facade });
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(.48, .92, 6), material(0xaab2b1, { map: getRoofTexture(), roughness: .78 }));
+    cap.position.y = .99;
+    turret.add(cap);
+    steipe.add(turret);
+  }
+  addLabel(steipe, 'STEIPE', 0, 1.68, front - .2, .86, '#f0c56f');
+  parent.add(steipe);
+  return steipe;
+}
+
+function addGangolfTower(parent, x, z) {
+  const tower = new THREE.Group();
+  tower.name = 'St. Gangolf – Hauptmarkt';
+  tower.position.set(x, 0, z);
+  const stone = 0xc8a779;
+  addBox(tower, { w: 2.85, h: 7.4, d: 2.85, color: stone, roughness: .73 });
+  addBox(tower, { y: 4.2, w: 3.1, h: .18, d: 3.1, color: 0xe1c69b });
+  for (const y of [3.15, 5.02, 5.98]) {
+    for (const xOffset of [-.7, .7]) addWindow(tower, xOffset, y, -1.47, -1, .42, .83, y > 5 ? false : true);
+  }
+  for (let battlement = -1.1; battlement <= 1.1; battlement += .55) addBox(tower, { x: battlement, y: 7.28, z: -1.18, w: .25, h: .38, d: .3, color: 0xb58c60 });
+  const spire = new THREE.Mesh(new THREE.ConeGeometry(1.42, 5.55, 4), material(0xa4afb2, { map: getRoofTexture(), roughness: .8 }));
+  spire.position.y = 10.1;
+  spire.rotation.y = Math.PI / 4;
+  spire.castShadow = true;
+  tower.add(spire);
+  const cross = new THREE.Mesh(new THREE.BoxGeometry(.08, .85, .08), material(0xd2b06f, { metalness: .32 }));
+  cross.position.y = 13.05;
+  tower.add(cross);
+  const crossBar = new THREE.Mesh(new THREE.BoxGeometry(.45, .08, .08), material(0xd2b06f, { metalness: .32 }));
+  crossBar.position.set(0, 13.28, 0);
+  tower.add(crossBar);
+  parent.add(tower);
+  return tower;
+}
+
 function addTree(parent, x, z, scale = 1, seed = 1) {
   const tree = new THREE.Group();
   tree.position.set(x, 0, z);
   addCylinder(tree, { rTop: .11 * scale, rBottom: .17 * scale, h: 1.52 * scale, sides: 8, color: 0x65452c });
   const canopy = new THREE.Group();
-  const first = new THREE.Mesh(new THREE.IcosahedronGeometry(.72 * scale, 1), material(choose(PALETTE.leaf, seed)));
+  const first = new THREE.Mesh(new THREE.SphereGeometry(.72 * scale, 14, 10), material(choose(PALETTE.leaf, seed)));
   first.position.set(-.13 * scale, 1.72 * scale, .04 * scale);
-  const second = new THREE.Mesh(new THREE.IcosahedronGeometry(.62 * scale, 1), material(choose(PALETTE.leaf, seed + 1)));
+  const second = new THREE.Mesh(new THREE.SphereGeometry(.62 * scale, 14, 10), material(choose(PALETTE.leaf, seed + 1)));
   second.position.set(.37 * scale, 1.83 * scale, -.05 * scale);
   canopy.add(first, second);
   const distantCanopy = new THREE.Mesh(new THREE.OctahedronGeometry(.86 * scale, 0), material(choose(PALETTE.leaf, seed)));
@@ -299,6 +409,7 @@ function addWineStand(parent, x, z) {
   stand.position.set(x, 0, z);
   addBox(stand, { w: 3.35, h: 1.32, d: 1.32, color: 0x6b4429 });
   addBox(stand, { y: 1.33, w: 3.65, h: .12, d: 1.58, color: 0x293332 });
+  addBox(stand, { y: 2.46, w: 3.82, h: .1, d: 1.78, color: 0x315048, roughness: .5 });
   for (let pole = -1; pole <= 1; pole += 2) addCylinder(stand, { x: pole * 1.45, z: -.57, rTop: .055, rBottom: .075, h: 2.7, sides: 6, color: 0x3a3026 });
   for (let stripe = -3; stripe <= 3; stripe += 1) addBox(stand, { x: stripe * .5, y: 2.69, z: -.57, w: .48, h: .11, d: .1, color: stripe % 2 ? 0xb66244 : 0xf2d29a });
   for (const offset of [-1.06, -.53, 0, .53, 1.06]) {
@@ -310,6 +421,20 @@ function addWineStand(parent, x, z) {
     barrel.rotation.z = Math.PI / 2;
     barrel.position.set(offset, .4, .76);
     stand.add(barrel);
+  }
+  // Friday evening light strings make the Viez stand the social heart of the square.
+  const bulbMaterial = material(0xffd887, { emissive: 0xff9d36, emissiveIntensity: 1.8, roughness: .25 });
+  for (let bulb = -6; bulb <= 6; bulb += 1) {
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(.055, 8, 6), bulbMaterial);
+    lamp.position.set(bulb * .24, 2.36 - Math.abs(bulb) * .025, -.82);
+    stand.add(lamp);
+  }
+  for (const [tableX, tableZ] of [[-1.7, 1.55], [1.55, 1.62], [2.3, .85]]) {
+    addCylinder(stand, { x: tableX, z: tableZ, rTop: .28, rBottom: .28, h: .58, sides: 12, color: 0x68432e });
+    addCylinder(stand, { x: tableX, y: .58, z: tableZ, rTop: .42, rBottom: .42, h: .055, sides: 12, color: 0xd2a36a, roughness: .42 });
+    const glass = new THREE.Mesh(new THREE.CylinderGeometry(.05, .075, .14, 8), material(0xe8dbc2, { transparent: true, opacity: .7, roughness: .16 }));
+    glass.position.set(tableX + .09, .74, tableZ);
+    stand.add(glass);
   }
   addLabel(stand, 'VIEZ · WEIN', 0, 2.2, -.76, 1.05);
   parent.add(stand);
@@ -378,17 +503,32 @@ function addStreetMusicCorner(parent, x, z) {
 
 function addFountain(parent) {
   const fountain = new THREE.Group();
-  addCylinder(fountain, { rTop: 2.38, rBottom: 2.55, h: .32, sides: 36, color: 0xd9c6a3, roughness: .52 });
-  addCylinder(fountain, { y: .22, rTop: 2.1, rBottom: 2.1, h: .11, sides: 36, color: 0x3c8795, metalness: .18, roughness: .2, transparent: true, opacity: .88 });
-  addCylinder(fountain, { y: .28, rTop: .42, rBottom: .56, h: 1.72, sides: 12, color: 0xd4b983, roughness: .6 });
-  addCylinder(fountain, { y: 1.95, rTop: .73, rBottom: .42, h: .16, sides: 18, color: 0xdcc49a });
-  const top = new THREE.Mesh(new THREE.SphereGeometry(.22, 12, 8), material(0x9e7343, { metalness: .35, roughness: .32 }));
-  top.position.y = 2.24;
-  fountain.add(top);
+  fountain.name = 'Petrusbrunnen – Hauptmarkt';
+  addCylinder(fountain, { rTop: 2.62, rBottom: 2.84, h: .24, sides: 48, color: 0xd8c09a, roughness: .56 });
+  addCylinder(fountain, { y: .23, rTop: 2.38, rBottom: 2.38, h: .14, sides: 48, color: 0x3b8290, metalness: .22, roughness: .18, transparent: true, opacity: .92 });
+  addCylinder(fountain, { y: .34, rTop: .72, rBottom: .94, h: .42, sides: 16, color: 0xd0b17d, roughness: .62 });
+  addCylinder(fountain, { y: .76, rTop: .38, rBottom: .55, h: 2.1, sides: 12, color: 0xc6a674, roughness: .67 });
+  addCylinder(fountain, { y: 2.78, rTop: .78, rBottom: .41, h: .2, sides: 20, color: 0xd9bd8c });
+  const statue = new THREE.Group();
+  statue.position.y = 2.98;
+  const robe = new THREE.Mesh(new THREE.ConeGeometry(.34, 1.05, 9), material(0x926b47, { metalness: .16, roughness: .55 }));
+  robe.position.y = .44;
+  statue.add(robe);
+  const torso = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 8), material(0x9b714b, { metalness: .16, roughness: .5 }));
+  torso.position.y = .98;
+  statue.add(torso);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.17, 10, 8), material(0xb78b59, { metalness: .13, roughness: .5 }));
+  head.position.y = 1.28;
+  statue.add(head);
+  const staff = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, 1.33, 6), material(0xd4b873, { metalness: .46, roughness: .3 }));
+  staff.position.set(.26, .7, 0);
+  staff.rotation.z = -.13;
+  statue.add(staff);
+  fountain.add(statue);
   const waterMaterial = new THREE.MeshBasicMaterial({ color: 0xd8f2eb, transparent: true, opacity: .56, depthWrite: false });
-  for (let i = 0; i < 4; i += 1) {
-    const stream = new THREE.Mesh(new THREE.CylinderGeometry(.025, .045, .94, 7, 1, true), waterMaterial);
-    stream.position.set(Math.cos(i * Math.PI / 2) * .37, 1.88, Math.sin(i * Math.PI / 2) * .37);
+  for (let i = 0; i < 6; i += 1) {
+    const stream = new THREE.Mesh(new THREE.CylinderGeometry(.022, .045, 1.16, 7, 1, true), waterMaterial);
+    stream.position.set(Math.cos(i * Math.PI / 3) * .46, 2.22, Math.sin(i * Math.PI / 3) * .46);
     stream.rotation.z = (i % 2 ? -.18 : .18);
     fountain.add(stream);
   }
@@ -449,6 +589,21 @@ function createCitizen(index, options = {}) {
     guitar.position.set(.16 * scale, .98 * scale, -.15);
     person.add(guitar);
   }
+  if (options.bike) {
+    const bike = new THREE.Group();
+    bike.position.set(.44 * scale, .34 * scale, .08);
+    const wheelMaterial = material(0x253038, { metalness: .32, roughness: .45 });
+    for (const wheelX of [-.21, .21]) {
+      const wheel = new THREE.Mesh(new THREE.TorusGeometry(.15, .016, 5, 12), wheelMaterial);
+      wheel.rotation.y = Math.PI / 2;
+      wheel.position.x = wheelX;
+      bike.add(wheel);
+    }
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(.39, .035, .035), material(0xc67b39, { metalness: .22 }));
+    frame.rotation.z = -.35;
+    bike.add(frame);
+    person.add(bike);
+  }
   person.userData = { mode: options.mode || 'stand', phase: index * .79, route: options.route || [], home: options.home || new THREE.Vector3() };
   return person;
 }
@@ -498,13 +653,54 @@ function addFlowerDrifts(parent) {
 }
 
 function loadCobblestones() {
+  if (cobblestoneTexture) return cobblestoneTexture;
   const texture = new THREE.TextureLoader().load(cobblestoneUrl);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(7.4, 6.3);
+  texture.repeat.set(5.5, 4.75);
   texture.anisotropy = 6;
+  cobblestoneTexture = texture;
+  return cobblestoneTexture;
+}
+
+function createPavingVariation() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 768;
+  const context = canvas.getContext('2d');
+  for (let i = 0; i < 430; i += 1) {
+    const seed = i * 13.37;
+    const x = hash(seed) * canvas.width;
+    const y = hash(seed + 4) * canvas.height;
+    const width = 7 + hash(seed + 8) * 25;
+    const height = 5 + hash(seed + 12) * 18;
+    context.fillStyle = hash(seed + 1) > .52 ? 'rgba(91, 63, 37, .11)' : 'rgba(255, 232, 180, .09)';
+    context.beginPath();
+    context.roundRect(x, y, width, height, 3 + hash(seed + 5) * 5);
+    context.fill();
+  }
+  for (let i = 0; i < 44; i += 1) {
+    context.strokeStyle = 'rgba(74, 57, 40, .18)';
+    context.lineWidth = 1 + hash(i) * 2;
+    context.beginPath();
+    context.moveTo(hash(i * 3) * canvas.width, hash(i * 9) * canvas.height);
+    context.lineTo(hash(i * 14) * canvas.width, hash(i * 17) * canvas.height);
+    context.stroke();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
+}
+
+function addPavingVariation(parent) {
+  const overlay = new THREE.Mesh(
+    new THREE.PlaneGeometry(59, 45),
+    new THREE.MeshBasicMaterial({ map: createPavingVariation(), transparent: true, opacity: .9, depthWrite: false }),
+  );
+  overlay.rotation.x = -Math.PI / 2;
+  overlay.position.y = -.017;
+  parent.add(overlay);
 }
 
 export function createWorld(scene, quality = 'medium') {
@@ -528,28 +724,42 @@ export function createWorld(scene, quality = 'medium') {
   ground.position.y = -.03;
   ground.receiveShadow = true;
   root.add(ground);
+  addPavingVariation(root);
 
-  // North and south sides: Hauptmarkt inspired façade rhythm, deliberately stylised.
-  const north = [
-    [-24, 5.2, 4.7, 5.8, 51, 'GOLDENE TRAUBE'], [-18.5, 4.1, 3.7, 5.3, 52, null], [-13.7, 5.5, 5.1, 5.7, 53, 'BÄCKEREI'],
-    [-7.5, 4.4, 4.4, 5.4, 54, null], [-2.2, 6.1, 5.6, 5.9, 55, 'MARKTCAFÉ'], [4.5, 4.7, 4.6, 5.6, 56, null],
-    [10, 5.8, 5.25, 5.8, 57, 'HAUPTMARKT'], [16.3, 4.3, 4, 5.4, 58, null], [21.1, 5.3, 4.7, 5.7, 59, 'WEIN & VIEZ'],
-  ];
-  north.forEach(([x, w, h, d, seed, sign]) => createTownhouse(root, { x, z: 17.5, w, h, d, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 3), seed, sign }));
-  const south = [
-    [-23, 5, 4.7, 5.4, 71, null], [-17.4, 4.2, 3.8, 5.2, 72, 'FLEISCHSTRASSE'], [-12.2, 5.6, 5.1, 5.8, 73, null],
-    [-5.7, 4.5, 4.15, 5.3, 74, 'BLUMEN'], [1.2, 6.2, 5.4, 5.9, 75, null], [8.5, 4.5, 4.3, 5.4, 76, null],
-    [14, 5.6, 5, 5.7, 77, 'BRÖTCHEN & VIEZ'], [20.5, 5.1, 4.6, 5.5, 78, null],
-  ];
-  south.forEach(([x, w, h, d, seed, sign]) => createTownhouse(root, { x, z: -17.5, w, h, d, rotation: Math.PI, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 3), seed, sign }));
-  const west = [
-    [-22.8, -9, 4.3, 4.1, 5, 91], [-23.2, -2.5, 5.2, 4.4, 5.1, 92], [-23, 4.8, 4.7, 4.1, 5, 93], [-22.5, 10.3, 4.1, 3.9, 4.8, 94],
-  ];
-  west.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: -Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
-  const east = [
-    [23.3, -10, 4.5, 4.4, 5, 101], [23.1, -3.6, 5.4, 4.8, 5.1, 102], [23.3, 3.8, 4.2, 4.2, 5, 103], [23.2, 10.1, 4.7, 4.5, 5, 104],
-  ];
-  east.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
+  // Hauptmarkt façade sequence: St. Gangolf, the ornate gables and the Steipe are
+  // the visual anchors from the supplied Trier photos. Street gaps form the Brot-
+  // and Fleischstraße axes instead of sealing the scene as a generic rectangle.
+  addGangolfTower(root, -20.5, 14.8);
+  [
+    [-15.4, 4.25, 4.55, 0xb55e50, 31, 'BROTSTRASSE', false],
+    [-10.8, 3.5, 4.18, 0xe5d7b6, 32, null, false],
+    [-7.0, 3.9, 4.8, 0xd89689, 33, null, true],
+    [-2.65, 4.45, 5.35, 0xc78170, 34, 'HAUPTMARKT', true],
+    [2.0, 3.5, 4.4, 0xf1ead8, 35, null, false],
+  ].forEach(([x, w, h, facade, seed, sign, ornate]) => createGabledHouse(root, { x, z: 14.7, w, h, facade, roof: choose(PALETTE.roof, seed), seed, sign, ornate }));
+  addSteipe(root, 8.2, 14.55);
+  [
+    [14.15, 3.7, 4.45, 0xe7e0d1, 41, null, false],
+    [18.1, 3.95, 4.78, 0xd1a276, 42, 'FLEISCHSTRASSE', false],
+    [22.0, 3.4, 4.3, 0xe7ded0, 43, null, false],
+  ].forEach(([x, w, h, facade, seed, sign, ornate]) => createGabledHouse(root, { x, z: 14.7, w, h, facade, roof: choose(PALETTE.roof, seed), seed, sign, ornate }));
+
+  [
+    [-22.5, 4.4, 4.5, 0xca8b69, 51, null], [-17.6, 4.1, 4.0, 0xf1e4c9, 52, 'WEIN & VIEZ'],
+    [-13.2, 4.2, 4.7, 0xd88673, 53, null], [-8.6, 4.5, 4.25, 0xe8ddd0, 54, null],
+    [-3.9, 4.4, 4.5, 0xc79a7d, 55, null], [1.0, 4.95, 4.8, 0xe7e4db, 56, 'MARKTCAFÉ'],
+    [6.2, 4.2, 4.25, 0xe9c29f, 57, null], [10.7, 4.6, 4.65, 0xc77768, 58, null],
+    [15.6, 4.5, 4.45, 0xe1d8cb, 59, null], [20.3, 4.15, 4.1, 0xdca782, 60, null],
+  ].forEach(([x, w, h, facade, seed, sign]) => createGabledHouse(root, { x, z: -17.7, w, h, facade, roof: choose(PALETTE.roof, seed), seed, sign, rotation: Math.PI, ornate: seed % 3 === 0 }));
+
+  [
+    [-22.8, -9.5, 4.0, 4.2, 0xd8b48c, 71], [-22.8, -3.7, 4.65, 4.5, 0xe5dbcf, 72],
+    [-22.7, 2.7, 4.25, 4.15, 0xc97b6b, 73], [-22.8, 8.7, 4.1, 4.25, 0xe3d6bf, 74],
+  ].forEach(([x, z, w, h, facade, seed]) => createGabledHouse(root, { x, z, w, h, d: 4.5, facade, roof: choose(PALETTE.roof, seed), seed, rotation: -Math.PI / 2, ornate: seed % 2 === 0 }));
+  [
+    [23.0, -9.6, 4.15, 4.25, 0xe4d7c2, 81], [23.0, -3.4, 4.8, 4.65, 0xc88770, 82],
+    [23.0, 3.1, 4.2, 4.25, 0xf0e7d9, 83], [23.0, 9.1, 4.1, 4.45, 0xd29f79, 84],
+  ].forEach(([x, z, w, h, facade, seed]) => createGabledHouse(root, { x, z, w, h, d: 4.5, facade, roof: choose(PALETTE.roof, seed), seed, rotation: Math.PI / 2, ornate: seed % 2 === 0 }));
 
   addFountain(root);
   addWineStand(root, -12.9, 2.1);
@@ -564,7 +774,7 @@ export function createWorld(scene, quality = 'medium') {
     addPlanter(root, x + .8, z + .45, rotation, choose(PALETTE.flower, x * 3));
   }
   [[-15, -5.7, 0], [-8.2, 6.4, Math.PI / 2], [7.5, -6.7, Math.PI], [16.8, -7.6, Math.PI / 2], [3.7, 8, .3]].forEach(([x, z, rotation]) => addBench(root, x, z, rotation));
-  [[-18, -7], [-16, 7.4], [-8.7, -9.2], [-6.6, 9], [7.7, 8.7], [10.1, -8.3], [18, 7.3], [18.3, -5.6]].forEach(([x, z], index) => addTree(root, x, z, .82 + (index % 3) * .1, index + 120));
+  [[-18, -7], [-16, 7.4], [-8.7, -9.2], [-6.6, 9], [7.7, 8.7], [10.1, -8.3], [18, 7.3], [18.3, -5.6], [-18.8, 4.4], [-11.8, 10.2], [4.2, 10.1], [14.9, -9.7], [20.1, 4.6]].forEach(([x, z], index) => addTree(root, x, z, .82 + (index % 3) * .1, index + 120));
   [[-20, -12], [-14.5, -12.3], [-8, -12.3], [-1, -12], [6.2, -12.4], [13, -12.4], [20, -12], [-19, 12.5], [-11, 12.5], [-3, 12.6], [5, 12.5], [13, 12.6], [20, 12.4]].forEach(([x, z], index) => addPlanter(root, x, z, index % 2 ? Math.PI / 2 : 0, choose(PALETTE.flower, index + 300)));
   addFlowerDrifts(root);
 
@@ -580,6 +790,8 @@ export function createWorld(scene, quality = 'medium') {
     [-15, -5.6, 'sit'], [-16.1, -5.7, 'sit'], [7.4, -6.8, 'sit'], [8.6, -6.9, 'stand'], [17.8, 4, 'phone'],
     [-7.4, -1.9, 'feed'], [-6.6, -1.4, 'feed'], [-5.7, -2.3, 'stand'], [8.9, 6.6, 'stand'], [10.2, 7, 'phone'],
     [-18.8, 1.6, 'walk'], [18.2, -1.1, 'walk'], [4.3, -3.6, 'walk'], [-1.6, 7.2, 'walk'], [2.4, -8.4, 'walk'],
+    [-11.7, 4.9, 'talk'], [-10.9, 5.2, 'laugh'], [11.7, 4.9, 'photo'], [13.0, 5.2, 'talk'],
+    [17.1, 1.6, 'bike'], [-17.1, -1.9, 'bike'], [1.8, 7.9, 'walk'],
   ];
   placement.forEach(([x, z, mode], index) => {
     const routes = [
@@ -593,6 +805,7 @@ export function createWorld(scene, quality = 'medium') {
       phone: mode === 'phone' || mode === 'photo',
       drink: mode === 'drink' || mode === 'sit',
       guitar: mode === 'music',
+      bike: mode === 'bike',
       outfit: mode === 'serve' ? 0x293c37 : undefined,
     });
     citizen.position.set(x, 0, z);
@@ -644,7 +857,8 @@ export function createWorld(scene, quality = 'medium') {
         citizen.position.x = home.x + Math.sin(time * (.18 + (index % 3) * .03) + phase) * .025;
         citizen.position.z = home.z + Math.cos(time * .22 + phase) * .018;
         citizen.position.y = (mode === 'sit' ? -.27 : 0) + Math.sin(time * 1.6 + phase) * .012;
-        if (mode === 'listen' || mode === 'feed') citizen.rotation.y = Math.sin(time * .44 + phase) * .35 + .3;
+        if (mode === 'listen' || mode === 'feed' || mode === 'talk' || mode === 'laugh') citizen.rotation.y = Math.sin(time * .44 + phase) * .35 + .3;
+        if (mode === 'laugh') citizen.position.y += Math.max(0, Math.sin(time * 3.4 + phase)) * .035;
       }
     });
     pigeons.forEach((pigeon) => {
@@ -657,6 +871,7 @@ export function createWorld(scene, quality = 'medium') {
 
   return {
     root,
+    citizens,
     visitorCount: citizens.length,
     update,
     clampPosition(position) {
