@@ -33,12 +33,9 @@ export class GameUI {
           <div class="title-lockup">
             <p class="eyebrow">Ein Abend. Eine Legende.</p>
             <h1>SKG <small>Auf der Suche nach dem Goldenen Viezporz</small></h1>
+            <div class="title-meta"><span>⌖ Trier · Hauptmarkt</span><span>✦ Golden Hour</span></div>
           </div>
           <div class="creator-card">
-            <div class="creator-preview" id="creator-preview">
-              <div class="portrait-person"><i class="portrait-hair"></i><b class="portrait-face"></b><em class="portrait-hoodie"></em></div>
-              <span>Dein Charakter</span>
-            </div>
             <div class="creator-form">
               <p class="eyebrow">Charakter erstellen</p>
               <h2>Bereit für den SKG?</h2>
@@ -204,6 +201,7 @@ export class GameUI {
   }
 
   refreshPreview() {
+    if (!this.elements.preview) return;
     this.elements.preview.dataset.outfit = this.profile.outfit;
     this.elements.preview.dataset.hair = this.profile.hair;
   }
