@@ -11,7 +11,7 @@ export class GameEngine {
     this.camera = new THREE.OrthographicCamera(-10, 10, 7, -7, .1, 120);
     this.camera.position.set(15, 22, 17);
     this.qualityProfile = this.chooseQualityProfile();
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.qualityProfile !== 'low', powerPreference: 'high-performance' });
+    this.renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: this.qualityProfile !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.18;
@@ -23,14 +23,44 @@ export class GameEngine {
     this.pointer = new THREE.Vector2();
     this.walkPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.destination = null;
+    this.cameraFocus = new THREE.Vector3(0, 0, 0);
     this.keys = new Set();
     this.joystick = new THREE.Vector2();
     this.running = true;
     this.profile = profile;
     this.world = createWorld(this.scene, this.qualityProfile);
+    // The detailed Hauptmarkt matte is the visual level layer. The runtime world
+    // keeps its navigation and actors independent, so it remains expandable.
+    this.world.root.visible = false;
+    this.scene.background = null;
+    this.scene.fog = null;
+    // A light real-time foreground layer keeps the square alive without covering
+    // the detailed, optimised backdrop with a second full population pass.
+    const foregroundVisitors = [
+      [-3.1, 6.8, 'talk'], [-1.2, 4.0, 'drink'], [2.0, 7.7, 'photo'],
+      [6.9, 2.1, 'talk'], [9.6, 3.8, 'phone'], [0.1, 5.0, 'music'],
+    ];
+    this.world.citizens.slice(0, foregroundVisitors.length).forEach((citizen, index) => {
+      const [x, z, mode] = foregroundVisitors[index];
+      citizen.position.set(x, 0, z);
+      citizen.userData.home.set(x, 0, z);
+      citizen.userData.mode = mode;
+      citizen.scale.setScalar(.56);
+      this.scene.add(citizen);
+    });
     this.player = makePerson({ name: profile.name, outfit: OUTFITS[profile.outfit] || OUTFITS.wald, scale: 1.08 });
-    this.player.position.set(-5.4, 0, -4.7);
-    this.world.root.add(this.player);
+    this.player.scale.setScalar(.7);
+    // This maps to the clear south-east side of the Petrusbrunnen in the fixed
+    // isometric level composition rather than onto the façade backdrop.
+    this.player.position.set(4.2, 0, 4.4);
+    const playerMarker = new THREE.Mesh(
+      new THREE.RingGeometry(.29, .39, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffd26c, transparent: true, opacity: .9, side: THREE.DoubleSide }),
+    );
+    playerMarker.rotation.x = -Math.PI / 2;
+    playerMarker.position.y = .035;
+    this.player.add(playerMarker);
+    this.scene.add(this.player);
     this.resize();
     this.bindInput();
     this.animate();
@@ -92,7 +122,7 @@ export class GameEngine {
     const height = this.canvas.clientHeight || window.innerHeight;
     this.renderer.setSize(width, height, false);
     const aspect = width / height;
-    const viewHeight = width < 620 ? 17.2 : 21.5;
+    const viewHeight = width < 620 ? 18.8 : 24.2;
     this.camera.left = (-viewHeight * aspect) / 2;
     this.camera.right = (viewHeight * aspect) / 2;
     this.camera.top = viewHeight / 2;
@@ -133,9 +163,11 @@ export class GameEngine {
   }
 
   updateCamera(delta) {
-    const desired = new THREE.Vector3(this.player.position.x + 13.5, 21, this.player.position.z + 16);
+    // The painted market is a deliberately fixed isometric composition; movement
+    // therefore reads clearly against it without shifting the landmark framing.
+    const desired = new THREE.Vector3(13.5, 21.5, 16);
     this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
-    this.camera.lookAt(this.player.position.x + .4, 0, this.player.position.z + .5);
+    this.camera.lookAt(0, 0, 0);
   }
 
   animate() {
