@@ -95,6 +95,14 @@ function makeRoof(w, d, wallHeight, color) {
   ]);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  // Every roof side receives its own UV island. The slate asset is a material on
+  // actual pitched geometry, not a flat scene backdrop, so it keeps its texture
+  // when the camera follows the player.
+  geometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([
+    0, 0, 1, 0, 1, 1,  0, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1,  0, 0, 1, 1, 0, 1,
+    0, 0, 1, 0, 1, 1,  0, 0, 1, 1, 0, 1,
+  ]), 2));
   geometry.computeVertexNormals();
   const roof = new THREE.Mesh(geometry, material(color, {
     map: getRoofTexture(),
@@ -135,6 +143,13 @@ function addWindow(parent, x, y, z, side, width = 0.42, height = 0.62, lit = tru
   mullion.position.copy(frame.position);
   mullion.position.z += side * 0.055;
   parent.add(mullion);
+  const crossbar = new THREE.Mesh(new THREE.BoxGeometry(width, 0.028, 0.032), material(0x243139));
+  crossbar.position.copy(mullion.position);
+  parent.add(crossbar);
+  const sill = new THREE.Mesh(new THREE.BoxGeometry(width + 0.16, 0.055, 0.12), material(0xe5c99f, { roughness: .58 }));
+  sill.position.set(x, y - height / 2 - .04, z + side * .1);
+  sill.castShadow = true;
+  parent.add(sill);
 }
 
 function addPlanter(parent, x, z, rotation = 0, flowers = 0xd67175) {
@@ -246,6 +261,11 @@ function createGabledHouse(parent, spec) {
   house.rotation.y = rotation;
   addBox(house, { w, h, d, color: facade, roughness: .71 });
   const front = -d / 2 - .035;
+  // Narrow pilasters and floor bands give the stylised facades a real, built
+  // rhythm instead of a single flat coloured block.
+  for (const edge of [-w / 2 + .12, w / 2 - .12]) {
+    addBox(house, { x: edge, y: .15, z: front - .03, w: .1, h: h - .18, d: .07, color: ornate ? 0xa65d51 : 0xe8cfaa });
+  }
   for (let story = 0; story < 3; story += 1) {
     const y = 1.18 + story * 1.02;
     for (let col = 0; col < Math.max(2, Math.floor(w / .72)); col += 1) {
@@ -264,6 +284,11 @@ function createGabledHouse(parent, spec) {
     const crest = new THREE.Mesh(new THREE.CircleGeometry(.17, 12), material(0xf0c57e, { metalness: .22, roughness: .4 }));
     crest.position.set(0, h + .58, front - .085);
     house.add(crest);
+    for (const windowY of [h + .48, h + .98]) {
+      const gableWindow = new THREE.Mesh(new THREE.CircleGeometry(.13, 10), material(0xffcf83, { emissive: 0x6e3e1f, emissiveIntensity: .5 }));
+      gableWindow.position.set(0, windowY, front - .082);
+      house.add(gableWindow);
+    }
   }
   if (sign) addLabel(house, sign, 0, 1.72, front - .14, Math.min(1.02, w * .22));
   parent.add(house);
