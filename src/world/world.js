@@ -3,7 +3,7 @@ import cobblestoneUrl from '../assets/hauptmarkt-cobblestone.png';
 
 const PALETTE = {
   sandstone: [0xd6b27f, 0xc99165, 0xe0c599, 0xb98762, 0xd3a876],
-  roof: [0x2d3740, 0x35434d, 0x493d39, 0x283037],
+  roof: [0x76584c, 0x66706d, 0x825a4e, 0x566563],
   leaf: [0x42613e, 0x587448, 0x35523c, 0x6d824e],
   flower: [0xd67175, 0xe9b35c, 0xc65c8c, 0xf2ded0],
   outfit: [0x3f5f50, 0x4d6075, 0x735348, 0x9a7041, 0x475348, 0x6f4243, 0x384654],
@@ -94,7 +94,13 @@ function makeRoof(w, d, wallHeight, color) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.computeVertexNormals();
-  const roof = new THREE.Mesh(geometry, material(color, { map: getRoofTexture(), roughness: 0.88, side: THREE.DoubleSide }));
+  const roof = new THREE.Mesh(geometry, material(color, {
+    map: getRoofTexture(),
+    roughness: 0.88,
+    emissive: 0x3a2b25,
+    emissiveIntensity: 0.28,
+    side: THREE.DoubleSide,
+  }));
   roof.castShadow = true;
   roof.receiveShadow = true;
   return roof;
@@ -106,16 +112,16 @@ function getRoofTexture() {
   canvas.width = 512;
   canvas.height = 512;
   const context = canvas.getContext('2d');
-  context.fillStyle = '#303a40';
+  context.fillStyle = '#75645c';
   context.fillRect(0, 0, canvas.width, canvas.height);
   for (let row = -1; row < 18; row += 1) {
     const offset = row % 2 ? -18 : 0;
     for (let column = -1; column < 12; column += 1) {
       const x = column * 48 + offset;
       const y = row * 31;
-      context.fillStyle = (row + column) % 3 ? '#3d474d' : '#263139';
+      context.fillStyle = (row + column) % 3 ? '#8d776b' : '#615853';
       context.fillRect(x + 2, y + 2, 45, 28);
-      context.strokeStyle = 'rgba(209, 192, 158, .09)';
+      context.strokeStyle = 'rgba(255, 232, 194, .18)';
       context.lineWidth = 1;
       context.strokeRect(x + 2, y + 2, 45, 28);
     }
@@ -510,7 +516,13 @@ export function createWorld(scene, quality = 'medium') {
 
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(59, 45),
-    material(0xffffff, { map: loadCobblestones(), roughness: .92, metalness: 0 }),
+    material(0xf3d39d, {
+      map: loadCobblestones(),
+      roughness: .92,
+      metalness: 0,
+      emissive: 0x514027,
+      emissiveIntensity: .32,
+    }),
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -.03;
@@ -519,25 +531,25 @@ export function createWorld(scene, quality = 'medium') {
 
   // North and south sides: Hauptmarkt inspired façade rhythm, deliberately stylised.
   const north = [
-    [-24, 5.2, 4.7, 10.5, 51, 'GOLDENE TRAUBE'], [-18.5, 4.1, 3.7, 9.3, 52, null], [-13.7, 5.5, 5.1, 10.1, 53, 'BÄCKEREI'],
-    [-7.5, 4.4, 4.4, 9.6, 54, null], [-2.2, 6.1, 5.6, 10.4, 55, 'MARKTCAFÉ'], [4.5, 4.7, 4.6, 10, 56, null],
-    [10, 5.8, 5.25, 10.3, 57, 'HAUPTMARKT'], [16.3, 4.3, 4, 9.7, 58, null], [21.1, 5.3, 4.7, 10.2, 59, 'WEIN & VIEZ'],
+    [-24, 5.2, 4.7, 5.8, 51, 'GOLDENE TRAUBE'], [-18.5, 4.1, 3.7, 5.3, 52, null], [-13.7, 5.5, 5.1, 5.7, 53, 'BÄCKEREI'],
+    [-7.5, 4.4, 4.4, 5.4, 54, null], [-2.2, 6.1, 5.6, 5.9, 55, 'MARKTCAFÉ'], [4.5, 4.7, 4.6, 5.6, 56, null],
+    [10, 5.8, 5.25, 5.8, 57, 'HAUPTMARKT'], [16.3, 4.3, 4, 5.4, 58, null], [21.1, 5.3, 4.7, 5.7, 59, 'WEIN & VIEZ'],
   ];
   north.forEach(([x, w, h, d, seed, sign]) => createTownhouse(root, { x, z: 17.5, w, h, d, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 3), seed, sign }));
   const south = [
-    [-23, 5, 4.7, 9, 71, null], [-17.4, 4.2, 3.8, 9.2, 72, 'FLEISCHSTRASSE'], [-12.2, 5.6, 5.1, 10.3, 73, null],
-    [-5.7, 4.5, 4.15, 9.4, 74, 'BLUMEN'], [1.2, 6.2, 5.4, 10.6, 75, null], [8.5, 4.5, 4.3, 9.5, 76, null],
-    [14, 5.6, 5, 10.1, 77, 'BRÖTCHEN & VIEZ'], [20.5, 5.1, 4.6, 9.7, 78, null],
+    [-23, 5, 4.7, 5.4, 71, null], [-17.4, 4.2, 3.8, 5.2, 72, 'FLEISCHSTRASSE'], [-12.2, 5.6, 5.1, 5.8, 73, null],
+    [-5.7, 4.5, 4.15, 5.3, 74, 'BLUMEN'], [1.2, 6.2, 5.4, 5.9, 75, null], [8.5, 4.5, 4.3, 5.4, 76, null],
+    [14, 5.6, 5, 5.7, 77, 'BRÖTCHEN & VIEZ'], [20.5, 5.1, 4.6, 5.5, 78, null],
   ];
   south.forEach(([x, w, h, d, seed, sign]) => createTownhouse(root, { x, z: -17.5, w, h, d, rotation: Math.PI, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 3), seed, sign }));
   const west = [
-    [-22.8, -9, 4.3, 4.1, 8, 91], [-23.2, -2.5, 5.2, 4.4, 8.2, 92], [-23, 4.8, 4.7, 4.1, 8, 93], [-22.5, 10.3, 4.1, 3.9, 7.5, 94],
+    [-22.8, -9, 4.3, 4.1, 5, 91], [-23.2, -2.5, 5.2, 4.4, 5.1, 92], [-23, 4.8, 4.7, 4.1, 5, 93], [-22.5, 10.3, 4.1, 3.9, 4.8, 94],
   ];
-  west.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
+  west.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: -Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
   const east = [
-    [23.3, -10, 4.5, 4.4, 8.3, 101], [23.1, -3.6, 5.4, 4.8, 8.5, 102], [23.3, 3.8, 4.2, 4.2, 8, 103], [23.2, 10.1, 4.7, 4.5, 8.2, 104],
+    [23.3, -10, 4.5, 4.4, 5, 101], [23.1, -3.6, 5.4, 4.8, 5.1, 102], [23.3, 3.8, 4.2, 4.2, 5, 103], [23.2, 10.1, 4.7, 4.5, 5, 104],
   ];
-  east.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: -Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
+  east.forEach(([x, z, w, h, d, seed]) => createTownhouse(root, { x, z, w, h, d, rotation: Math.PI / 2, facade: choose(PALETTE.sandstone, seed), roof: choose(PALETTE.roof, seed + 2), seed }));
 
   addFountain(root);
   addWineStand(root, -12.9, 2.1);
@@ -599,7 +611,8 @@ export function createWorld(scene, quality = 'medium') {
   const warmSky = new THREE.Color(0xdda96a);
   scene.background = warmSky;
   scene.fog = new THREE.Fog(0xdda96a, 30, 74);
-  scene.add(new THREE.HemisphereLight(0xffe4b8, 0x274335, 2.05));
+  scene.add(new THREE.HemisphereLight(0xffe4b8, 0x51695c, 2.5));
+  scene.add(new THREE.AmbientLight(0xffd9ad, .72));
   const sun = new THREE.DirectionalLight(0xffb969, 4.15);
   sun.position.set(-28, 30, 14);
   sun.castShadow = true;
