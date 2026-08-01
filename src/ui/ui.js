@@ -19,13 +19,13 @@ export class GameUI {
           <div class="title-lockup">
             <p class="eyebrow">Freitag · 19:47 · Golden Hour</p>
             <h1>SKG <small>Hauptmarkt · Trier</small></h1>
-            <div class="title-meta"><span>⌖ Erkunde frei</span><span>✦ 36 Marktbesucher</span></div>
+            <div class="title-meta"><span>⌖ Erkunde frei</span><span>✦ 43 Marktbesucher</span></div>
           </div>
           <div class="creator-card market-start-card">
             <div class="creator-form">
-              <p class="eyebrow">Sprint 1 · Vertical Slice</p>
-              <h2>Der Hauptmarkt lebt.</h2>
-              <p class="market-intro">Ein größerer, stilisierter Trierer Hauptmarkt: Viezstand, Brunnen, Außengastronomie, Musik und der warme Abend vor der Nacht.</p>
+              <p class="eyebrow">Sprint 2.1 · Hauptmarkt Rework</p>
+              <h2>Der Trierer Hauptmarkt.</h2>
+              <p class="market-intro">Steipe, St. Gangolf, Petrusbrunnen, Weinstand und die farbige Giebelreihe: ein warmer Freitagabend im Herzen von Trier.</p>
               <label for="character-name">Dein Name</label>
               <input id="character-name" maxlength="20" value="Johannes" autocomplete="name" />
               <div class="choice-group"><span>Jacke</span><div class="swatches" data-field="outfit"><button class="swatch active wald" data-value="wald" aria-label="Waldgrüne Jacke"></button><button class="swatch blau" data-value="blau" aria-label="Blaue Jacke"></button><button class="swatch kupfer" data-value="kupfer" aria-label="Kupferfarbene Jacke"></button></div></div>
@@ -37,7 +37,7 @@ export class GameUI {
         <section class="market-hud hidden" id="market-hud" aria-label="Hauptmarkt Informationen">
           <aside class="market-card"><p class="eyebrow">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span>Golden Hour · lebendiger Abend</p></aside>
           <div class="market-location">HAUPTMARKT · TRIER</div>
-          <div class="market-visitor" id="visitor-count"><b>36</b><span>Menschen auf dem Platz</span></div>
+          <div class="market-visitor" id="visitor-count"><b>43</b><span>Menschen auf dem Platz</span></div>
           <div class="market-player"><i id="avatar-letter">J</i><div><b id="player-name">Johannes</b><span>Stadtrundgang</span></div></div>
           <div class="market-controls"><span>WASD</span><span>bewegen</span><i></i><span>Scroll</span><span>zoomen</span></div>
           <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><i></i></div></div>
@@ -99,6 +99,7 @@ export class GameUI {
   }
 
   begin(profile, visitors) {
+    this.app.querySelector('.market-shell').classList.add('market-play');
     this.elements.start.classList.add('hidden');
     this.elements.hud.classList.remove('hidden');
     this.elements.playerName.textContent = profile.name;
