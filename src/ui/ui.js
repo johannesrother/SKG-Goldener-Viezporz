@@ -10,7 +10,7 @@ export class GameUI {
   render() {
     this.app.innerHTML = `
       <main class="game-shell market-shell">
-        <canvas id="game-canvas" aria-label="Spielbarer Hauptmarkt von Trier"></canvas>
+        <canvas id="game-canvas" aria-label="Spielbare Altstadt von Trier"></canvas>
         <div class="screen-vignette"></div>
         <section class="boot-screen" id="boot-screen">
           <div class="boot-mark">SKG</div><p>Hauptmarkt wird belebt …</p><div class="loading-line"><i></i></div>
@@ -18,26 +18,27 @@ export class GameUI {
         <section class="start-overlay" id="start-overlay" aria-label="Hauptmarkt starten">
           <div class="title-lockup">
             <p class="eyebrow">Freitag · 19:47 · Golden Hour</p>
-            <h1>SKG <small>Hauptmarkt · Trier</small></h1>
-            <div class="title-meta"><span>⌖ Erkunde frei</span><span>✦ 43 Marktbesucher</span></div>
+            <h1>SKG <small>Hauptmarkt · Domfreihof</small></h1>
+            <div class="title-meta"><span>⌖ Erkunde frei</span><span>✦ Trierer Altstadt</span></div>
           </div>
           <div class="creator-card market-start-card">
             <div class="creator-form">
-              <p class="eyebrow">Sprint 2.1 · Hauptmarkt Rework</p>
-              <h2>Der Trierer Hauptmarkt.</h2>
-              <p class="market-intro">Steipe, St. Gangolf, Petrusbrunnen, Weinstand und die farbige Giebelreihe: ein warmer Freitagabend im Herzen von Trier.</p>
+              <p class="eyebrow">Sprint 3 · Altstadt-Erweiterung</p>
+              <h2>Vom Hauptmarkt zum Dom.</h2>
+              <p class="market-intro">Durch die Sternstraße zum Domfreihof: ein warmer Freitagabend in der Trierer Altstadt.</p>
               <label for="character-name">Dein Name</label>
               <input id="character-name" maxlength="20" value="Johannes" autocomplete="name" />
               <div class="choice-group"><span>Jacke</span><div class="swatches" data-field="outfit"><button class="swatch active wald" data-value="wald" aria-label="Waldgrüne Jacke"></button><button class="swatch blau" data-value="blau" aria-label="Blaue Jacke"></button><button class="swatch kupfer" data-value="kupfer" aria-label="Kupferfarbene Jacke"></button></div></div>
-              <button class="primary-button" id="start-game">Hauptmarkt betreten <span>→</span></button>
+              <button class="primary-button" id="start-game">Trier erkunden <span>→</span></button>
               <p class="control-copy">Klick zum Laufen · WASD / Pfeiltasten · Mausrad zum Zoomen</p>
             </div>
           </div>
         </section>
-        <section class="market-hud hidden" id="market-hud" aria-label="Hauptmarkt Informationen">
-          <aside class="market-card"><p class="eyebrow">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span>Golden Hour · lebendiger Abend</p></aside>
-          <div class="market-location">HAUPTMARKT · TRIER</div>
+        <section class="market-hud hidden" id="market-hud" aria-label="Trierer Altstadt Informationen">
+          <aside class="market-card"><p class="eyebrow" id="location-kicker">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span><span id="zone-mood">Golden Hour · lebendiger Abend</span></p></aside>
+          <div class="market-location" id="location-name">HAUPTMARKT · TRIER</div>
           <div class="market-visitor" id="visitor-count"><b>43</b><span>Menschen auf dem Platz</span></div>
+          <div class="route-mini" aria-label="Karte: Hauptmarkt, Sternstraße, Domfreihof"><b>HAUPTMARKT</b><i></i><b>STERNSTR.</b><i></i><b>DOMFREIHOF</b><em id="map-player">●</em></div>
           <div class="market-player"><i id="avatar-letter">J</i><div><b id="player-name">Johannes</b><span>Stadtrundgang</span></div></div>
           <div class="market-controls"><span>WASD</span><span>bewegen</span><i></i><span>Scroll</span><span>zoomen</span></div>
           <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><i></i></div></div>
@@ -53,6 +54,10 @@ export class GameUI {
       avatar: this.app.querySelector('#avatar-letter'),
       playerName: this.app.querySelector('#player-name'),
       visitors: this.app.querySelector('#visitor-count'),
+      locationName: this.app.querySelector('#location-name'),
+      locationKicker: this.app.querySelector('#location-kicker'),
+      zoneMood: this.app.querySelector('#zone-mood'),
+      mapPlayer: this.app.querySelector('#map-player'),
       joystick: this.app.querySelector('#joystick'),
     };
   }
@@ -106,8 +111,15 @@ export class GameUI {
     this.updateMarket(visitors);
   }
 
-  updateMarket(visitors) {
+  updateMarket(visitors, location = { name: 'Hauptmarkt', zone: 'hauptmarkt' }) {
     this.elements.visitors.innerHTML = `<b>${visitors}</b><span>Menschen auf dem Platz</span>`;
+    const names = { hauptmarkt: 'HAUPTMARKT · TRIER', sternstrasse: 'STERNSTRASSE · TRIER', domfreihof: 'DOMFREIHOF · TRIER' };
+    const moods = { hauptmarkt: 'Golden Hour · lebendiger Abend', sternstrasse: 'Warme Gasse · Blick zum Dom', domfreihof: 'Offener Himmel · Domglocken' };
+    const progress = { hauptmarkt: '8%', sternstrasse: '50%', domfreihof: '91%' };
+    this.elements.locationName.textContent = names[location.zone] || names.hauptmarkt;
+    this.elements.locationKicker.textContent = `${location.name || 'Hauptmarkt'} · Trier`;
+    this.elements.zoneMood.textContent = moods[location.zone] || moods.hauptmarkt;
+    this.elements.mapPlayer.style.left = progress[location.zone] || progress.hauptmarkt;
   }
 
   showWebGLError() {
