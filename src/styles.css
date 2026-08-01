@@ -13,8 +13,9 @@ button { cursor: pointer; }
 .hidden { display: none !important; }
 
 .game-shell { position: fixed; inset: 0; overflow: hidden; background: #17211e; }
-#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-.screen-vignette { pointer-events: none; position: absolute; inset: 0; z-index: 1; background: radial-gradient(ellipse at center, transparent 38%, rgba(3, 8, 10, .38) 100%); }
+.market-shell.market-play::before { content: ''; position: absolute; inset: 0; z-index: 0; background: url('./assets/hauptmarkt-isometric-background.png') center/cover no-repeat; }
+#game-canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.screen-vignette { pointer-events: none; position: absolute; inset: 0; z-index: 2; background: radial-gradient(ellipse at center, transparent 38%, rgba(3, 8, 10, .38) 100%); }
 
 .boot-screen, .start-overlay, .dialogue-layer, .panel-layer { position: absolute; z-index: 15; inset: 0; }
 .boot-screen { display: grid; place-content: center; gap: .85rem; text-align: center; background: #17211e; transition: opacity .4s ease; }
@@ -27,7 +28,7 @@ button { cursor: pointer; }
 .start-overlay { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: clamp(1rem, 2.4vh, 1.55rem); padding: clamp(1.5rem, 5vw, 5.4rem); overflow: auto; background:
   linear-gradient(90deg, rgba(7, 15, 18, .98) 0%, rgba(8, 16, 18, .92) 27%, rgba(8, 16, 18, .61) 43%, rgba(8, 16, 18, .08) 68%),
   linear-gradient(0deg, rgba(5, 10, 13, .22), transparent 48%),
-  url('./assets/trier-golden-hour-title.png') center/cover no-repeat; }
+  url('./assets/hauptmarkt-landmark-facades.png') center/cover no-repeat; }
 .title-lockup { width: min(530px, 43vw); text-align: left; }
 .eyebrow { margin: 0 0 .3rem; color: #e8bd68; text-transform: uppercase; letter-spacing: .13em; font-size: .69rem; font-weight: 800; }
 .title-lockup h1, .ending-card h1 { margin: 0; color: #f8e8bd; font: 700 clamp(3.3rem, 5.6vw, 5.25rem)/.82 Georgia, serif; letter-spacing: -.06em; text-shadow: 0 3px 18px rgba(0,0,0,.48); }
