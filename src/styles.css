@@ -13,8 +13,7 @@ button { cursor: pointer; }
 .hidden { display: none !important; }
 
 .game-shell { position: fixed; inset: 0; overflow: hidden; background: #17211e; }
-.market-shell.market-play::before { content: ''; position: absolute; inset: 0; z-index: 0; background: url('./assets/hauptmarkt-isometric-background.png') center/cover no-repeat; }
-#game-canvas { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .screen-vignette { pointer-events: none; position: absolute; inset: 0; z-index: 2; background: radial-gradient(ellipse at center, transparent 38%, rgba(3, 8, 10, .38) 100%); }
 
 .boot-screen, .start-overlay, .dialogue-layer, .panel-layer { position: absolute; z-index: 15; inset: 0; }
