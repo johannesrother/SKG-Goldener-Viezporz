@@ -312,7 +312,11 @@ export class GameEngine {
     this.location = this.world.getLocation(this.player.position);
     const streetZone = ['porta', 'simeonstrasse', 'brotstrasse', 'fleischstrasse'].includes(this.location.zone);
     const plazaZone = ['hauptmarkt', 'domfreihof', 'kornmarkt'].includes(this.location.zone);
-    const focusBias = streetZone ? .035 : this.location.zone === 'kornmarkt' ? .08 : .25;
+    const portraitMobile = this.isTouchDevice && window.innerHeight > window.innerWidth;
+    // On a tall phone screen the old plaza bias pulled the camera back toward
+    // the world centre. At the Domfreihof this could leave the player at the
+    // edge of the frame. Portrait play follows the hero directly instead.
+    const focusBias = portraitMobile ? 0 : streetZone ? .035 : this.location.zone === 'kornmarkt' ? .08 : .25;
     this.cameraFocus.set(
       THREE.MathUtils.lerp(this.player.position.x, 0, focusBias),
       0,
@@ -326,12 +330,12 @@ export class GameEngine {
       // row from covering the player, while still keeping an oblique view.
       ? new THREE.Vector3(this.cameraFocus.x + 3.6, cameraHeight, this.cameraFocus.z - 19.8)
       : new THREE.Vector3(this.cameraFocus.x + 10.8, cameraHeight, this.cameraFocus.z + 17.4);
-    this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
+    this.camera.position.lerp(desired, 1 - Math.exp(-delta * (portraitMobile ? 4.6 : 2.35)));
     this.camera.lookAt(this.cameraFocus.x, .3, this.cameraFocus.z);
     // A gentle, automatic widening at the three plazas lets their landmarks
     // breathe. The player's wheel zoom remains an offset, so it is never
     // overridden while they explore.
-    const zoneZoom = plazaZone ? .91 : streetZone ? 1.025 : .97;
+    const zoneZoom = portraitMobile ? (plazaZone ? .94 : streetZone ? 1 : .97) : plazaZone ? .91 : streetZone ? 1.025 : .97;
     const desiredZoom = THREE.MathUtils.clamp(this.baseZoom * zoneZoom + this.manualZoomOffset, .76, 1.25);
     const zoomAlpha = 1 - Math.exp(-delta * 1.7);
     if (Math.abs(this.camera.zoom - desiredZoom) > .0001) {
