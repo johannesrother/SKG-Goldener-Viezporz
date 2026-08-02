@@ -67,7 +67,7 @@ export class GameUI {
           <div class="market-player"><i id="avatar-letter">J</i><div><b id="player-name">Johannes</b><span>Stadtrundgang</span></div></div>
           <div class="market-controls"><span>WASD</span><span>bewegen</span><i></i><span>Scroll</span><span>zoomen</span></div>
           <button class="world-interact hidden" id="interact-button" aria-label="Mit Person sprechen"><kbd>E</kbd><span id="interact-label">Sprechen</span></button>
-          <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><span>LAUFEN</span><i></i></div><button class="mobile-talk hidden" id="mobile-interact" aria-label="Reden"><i>✦</i><span id="mobile-interact-text">REDEN</span></button></div>
+          <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><span>LAUFEN</span><i></i></div><button class="mobile-talk is-unavailable" id="mobile-interact" aria-label="Reden: Komm näher an eine Figur." data-hint="Komm näher an eine Figur." type="button" disabled><i>✦</i><span id="mobile-interact-text">REDEN</span></button></div>
         </section>
         <section class="dialogue-layer hidden" id="dialogue-layer" aria-live="polite"></section>
         <div class="memory-toast hidden" id="memory-toast" role="status"></div>
@@ -252,7 +252,9 @@ export class GameUI {
   showInteraction(label) {
     const visible = Boolean(label);
     this.elements.interact.classList.toggle('hidden', !visible);
-    this.elements.mobileInteract.classList.toggle('hidden', !visible);
+    this.elements.mobileInteract.classList.remove('hidden');
+    this.elements.mobileInteract.disabled = !visible;
+    this.elements.mobileInteract.classList.toggle('is-unavailable', !visible);
     if (visible) {
       this.elements.interactLabel.textContent = label;
       const action = label.includes('zusammensitzen') ? 'SITZEN' : 'REDEN';
@@ -260,7 +262,9 @@ export class GameUI {
       this.elements.mobileInteract.dataset.hint = label;
       this.elements.mobileInteract.setAttribute('aria-label', `${action}: ${label}`);
     } else {
-      delete this.elements.mobileInteract.dataset.hint;
+      this.elements.mobileInteractText.textContent = 'REDEN';
+      this.elements.mobileInteract.dataset.hint = 'Komm näher an eine Figur.';
+      this.elements.mobileInteract.setAttribute('aria-label', 'Reden: Komm näher an eine Figur.');
     }
   }
 
