@@ -1,5 +1,6 @@
 import { GameEngine } from './core/engine.js';
 import { Soundscape } from './audio/soundscape.js';
+import { CityStrollQuest } from './quests/city-stroll.js';
 import { GameUI } from './ui/ui.js';
 import './styles.css';
 
@@ -9,40 +10,102 @@ class HauptmarktSlice {
   constructor(app) {
     this.app = app;
     this.engine = null;
+    this.menuEngine = null;
+    this.quest = null;
     this.audio = new Soundscape(.4);
     this.lastUiUpdate = 0;
     this.ui = new GameUI(app, {
       onStart: (profile) => this.start(profile),
+      onProfileChange: (profile) => this.updateMenuProfile(profile),
+      onMenuInteraction: () => this.activateMenuAudio(),
+      onMenuHover: () => this.audio.hover(),
       onJoystick: (x, y) => this.engine?.setJoystick(x, y),
+      onInteract: () => this.quest?.interact(this.engine?.getPosition()),
+      onReturnToMenu: () => this.returnToMenu(),
     });
     this.ui.showStart(this.readProfile());
+    this.startMenuScene(this.ui.profile);
   }
 
   readProfile() {
     try { return JSON.parse(localStorage.getItem(PROFILE_KEY)) || null; } catch { return null; }
   }
 
-  start(profile) {
+  persistProfile(profile) {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
-    this.engine?.destroy();
+  }
+
+  activateMenuAudio() {
     this.audio.activate();
     this.audio.startMarket();
+  }
+
+  updateMenuProfile(profile) {
+    this.persistProfile(profile);
+    this.menuEngine?.setPreviewStyle(profile);
+  }
+
+  startMenuScene(profile) {
+    try {
+      this.menuEngine?.destroy();
+      this.menuEngine = new GameEngine(this.ui.elements.canvas, profile);
+      this.menuEngine.setMenuPresentation(true);
+    } catch (error) {
+      this.ui.showWebGLError(error);
+    }
+  }
+
+  start(profile) {
+    this.persistProfile(profile);
+    this.menuEngine?.destroy();
+    this.menuEngine = null;
+    this.engine?.destroy();
+    this.activateMenuAudio();
     try {
       this.engine = new GameEngine(this.ui.elements.canvas, profile, {
         onFrame: (frame) => this.onFrame(frame),
+        onInteract: (position) => this.quest?.interact(position),
+        onIntroEnd: () => this.ui.revealHud(),
+        onCinematicEnd: () => this.ui.showEnding(),
       });
-      this.ui.begin(profile, this.engine.world.visitorCount);
+      this.ui.begin(profile, this.engine.world.visitorCount, false);
+      this.quest = new CityStrollQuest({
+        world: this.engine.world,
+        playerName: profile.name,
+        callbacks: {
+          onQuestChange: (quest) => this.ui.setQuest(quest),
+          onPrompt: (label) => this.ui.showInteraction(label),
+          onDialogue: (lines, done) => this.ui.showDialogue(lines, done),
+          onChoice: (choice, done) => this.ui.showChoice(choice, done),
+          onMemory: (memory) => this.ui.showMemory(memory),
+          onProgress: (finale) => this.audio.progress(finale),
+          onWineMoment: () => this.engine?.beginWineMoment(this.engine.world.wineStandPoint),
+          onCinematic: (target, duration) => this.engine?.beginCinematic(target, duration),
+        },
+      });
+      this.quest.begin();
+      this.engine.beginMarketIntro();
     } catch (error) {
       this.ui.showWebGLError(error);
     }
   }
 
   onFrame(frame) {
+    this.quest?.update(frame);
     const now = performance.now();
     if (now - this.lastUiUpdate < 350) return;
     this.lastUiUpdate = now;
     this.audio.setZone(frame.location?.zone || 'hauptmarkt');
     this.ui.updateMarket(frame.visitorCount, frame.location);
+  }
+
+  returnToMenu() {
+    this.engine?.destroy();
+    this.engine = null;
+    this.quest = null;
+    this.lastUiUpdate = 0;
+    this.ui.returnToMenu(this.readProfile());
+    this.startMenuScene(this.ui.profile);
   }
 }
 
