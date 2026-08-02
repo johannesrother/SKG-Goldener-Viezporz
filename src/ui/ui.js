@@ -2,7 +2,7 @@ export class GameUI {
   constructor(app, callbacks = {}) {
     this.app = app;
     this.callbacks = callbacks;
-    this.profile = { name: 'Johannes', outfit: 'wald', hair: 'dunkel' };
+    this.profile = { name: 'Johannes', outfit: 'dunkelgruen', hair: 'braun' };
     this.render();
     this.bindEvents();
   }
@@ -15,55 +15,85 @@ export class GameUI {
         <section class="boot-screen" id="boot-screen">
           <div class="boot-mark">SKG</div><p>Hauptmarkt wird belebt …</p><div class="loading-line"><i></i></div>
         </section>
-        <section class="start-overlay" id="start-overlay" aria-label="Hauptmarkt starten">
-          <div class="title-lockup">
+        <section class="start-overlay main-menu" id="start-overlay" aria-label="SKG Hauptmenü">
+          <header class="main-menu-title">
             <p class="eyebrow">Freitag · 19:47 · Golden Hour</p>
-            <h1>SKG <small>Porta Nigra · Domfreihof</small></h1>
-            <div class="title-meta"><span>⌖ Erkunde frei</span><span>✦ Trierer Altstadt</span></div>
-          </div>
-          <div class="creator-card market-start-card">
-            <div class="creator-form">
-              <p class="eyebrow">Sprint 3 · Altstadt-Erweiterung</p>
-              <h2>Das Herz von Trier.</h2>
-              <p class="market-intro">Von der Porta Nigra über die Simeonstraße zum Hauptmarkt und weiter bis zum Domfreihof.</p>
+            <h1>SKG</h1>
+            <p>Auf der Suche nach dem Goldenen Viezporz</p>
+          </header>
+          <div class="main-menu-layout">
+            <section class="main-menu-card" aria-label="Charakter auswählen">
               <label for="character-name">Dein Name</label>
               <input id="character-name" maxlength="20" value="Johannes" autocomplete="name" />
-              <div class="choice-group"><span>Jacke</span><div class="swatches" data-field="outfit"><button class="swatch active wald" data-value="wald" aria-label="Waldgrüne Jacke"></button><button class="swatch blau" data-value="blau" aria-label="Blaue Jacke"></button><button class="swatch kupfer" data-value="kupfer" aria-label="Kupferfarbene Jacke"></button></div></div>
-              <button class="primary-button" id="start-game">Trier erkunden <span>→</span></button>
-              <p class="control-copy">Klick zum Laufen · WASD / Pfeiltasten · Mausrad zum Zoomen</p>
-            </div>
+              <div class="menu-choice-group">
+                <span>Kleidung</span>
+                <div class="menu-choices" data-field="outfit" role="radiogroup" aria-label="Kleidungsfarbe">
+                  <button class="menu-choice beige" data-value="beige" type="button">Beige</button>
+                  <button class="menu-choice dunkelgruen active" data-value="dunkelgruen" type="button">Dunkelgrün</button>
+                  <button class="menu-choice weinrot" data-value="weinrot" type="button">Weinrot</button>
+                  <button class="menu-choice dunkelblau" data-value="dunkelblau" type="button">Dunkelblau</button>
+                  <button class="menu-choice anthrazit" data-value="anthrazit" type="button">Anthrazit</button>
+                </div>
+              </div>
+              <div class="menu-choice-group">
+                <span>Haare</span>
+                <div class="menu-choices" data-field="hair" role="radiogroup" aria-label="Haarfarbe">
+                  <button class="menu-choice schwarz" data-value="schwarz" type="button">Schwarz</button>
+                  <button class="menu-choice braun active" data-value="braun" type="button">Braun</button>
+                  <button class="menu-choice blond" data-value="blond" type="button">Blond</button>
+                  <button class="menu-choice rot" data-value="rot" type="button">Rot</button>
+                  <button class="menu-choice grau" data-value="grau" type="button">Grau</button>
+                </div>
+              </div>
+              <button class="menu-start-button" id="start-game" type="button">Spiel starten <span>→</span></button>
+              <div class="menu-utility" aria-label="Weitere Informationen">
+                <button id="menu-settings" type="button">Einstellungen</button>
+                <button id="menu-credits" type="button">Credits</button>
+              </div>
+              <p class="menu-message" id="menu-message" aria-live="polite">Deine Auswahl wird automatisch gespeichert.</p>
+            </section>
+            <aside class="menu-character-stage" aria-label="Charaktervorschau">
+              <span>Charaktervorschau</span>
+              <i>Die Figur im Hintergrund ist deine Spielfigur.</i>
+            </aside>
           </div>
+          <p class="menu-atmosphere">Hauptmarkt · Trier · Klick zum Laufen · WASD · Mausrad zum Zoomen</p>
         </section>
         <section class="market-hud hidden" id="market-hud" aria-label="Trierer Altstadt Informationen">
-          <aside class="market-card"><p class="eyebrow" id="location-kicker">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span><span id="zone-mood">Golden Hour · lebendiger Abend</span></p></aside>
+          <aside class="market-card"><p class="eyebrow" id="location-kicker">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span><span id="zone-mood">Golden Hour · lebendiger Abend</span></p><div class="quest-brief"><span>✦ <b id="quest-title">DER ERSTE SKG</b><em id="quest-count">1/5</em></span><p id="quest-objective">Triff Johannes am Weinstand.</p></div></aside>
           <div class="market-location" id="location-name">HAUPTMARKT · TRIER</div>
           <div class="market-visitor" id="visitor-count"><b>43</b><span>Menschen auf dem Platz</span></div>
           <button class="route-mini" id="open-map" aria-label="Stadtkarte öffnen"><b>PORTA</b><i></i><b>SIMEON</b><i></i><b>MARKT</b><i></i><b>DOM</b><em id="map-player">●</em></button>
           <div class="market-player"><i id="avatar-letter">J</i><div><b id="player-name">Johannes</b><span>Stadtrundgang</span></div></div>
           <div class="market-controls"><span>WASD</span><span>bewegen</span><i></i><span>Scroll</span><span>zoomen</span></div>
-          <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><i></i></div></div>
+          <button class="world-interact hidden" id="interact-button" aria-label="Mit Person sprechen"><kbd>E</kbd><span id="interact-label">Sprechen</span></button>
+          <div class="mobile-controls"><div class="joystick" id="joystick" aria-label="Bewegen"><i></i></div><button class="mobile-talk hidden" id="mobile-interact" aria-label="Sprechen">✦</button></div>
         </section>
+        <section class="dialogue-layer hidden" id="dialogue-layer" aria-live="polite"></section>
+        <div class="memory-toast hidden" id="memory-toast" role="status"></div>
+        <section class="demo-finale hidden" id="demo-finale" aria-live="assertive"><div><p class="eyebrow">Kapitel 1 abgeschlossen</p><h2>Der erste SKG</h2><p>Freigeschaltete Erinnerungen</p><ul><li>Erster gemeinsamer SKG</li><li>Alle sind da</li><li>Ein Abend in Trier</li><li>Die Legende vom Goldenen Viezporz</li></ul><button id="return-to-menu" type="button">Zum Hauptmenü</button></div></section>
         <section class="city-map hidden" id="city-map" aria-label="Stadtkarte Trier">
           <div class="city-map-card">
             <button class="close-city-map" id="close-map" aria-label="Karte schließen">×</button>
             <p class="eyebrow">Trierer Altstadt · Orientierung</p>
             <h2>Dein Rundgang</h2>
             <p class="map-caption">Norden ist oben. Die Karte ist für den Spielweg verdichtet, nicht maßstabsgetreu.</p>
-            <svg viewBox="0 0 620 520" role="img" aria-label="Spielkarte von Porta Nigra, Simeonstraße, Hauptmarkt, Sternstraße und Domfreihof">
+            <svg viewBox="0 0 620 520" role="img" aria-label="Spielkarte von Porta Nigra, Simeonstraße, Hauptmarkt, Sternstraße, Domfreihof, Brotstraße, Fleischstraße und Kornmarkt">
               <defs><linearGradient id="mapPaper" x1="0" x2="1"><stop stop-color="#21332f"/><stop offset="1" stop-color="#172622"/></linearGradient></defs>
               <rect x="8" y="8" width="604" height="504" rx="18" fill="url(#mapPaper)" stroke="#d6ab58" stroke-opacity=".55"/>
-              <path class="map-blocks" d="M115 92h168v82H115zM340 196h155v90H340zM86 340h100v110H86zM279 338h140v118H279zM444 330h112v125H444z"/>
-              <path class="map-road main" d="M210 72V348"/><path class="map-road main" d="M210 390H507"/><path class="map-road side" d="M210 390V472M210 390H76"/><path class="map-road side" d="M432 390V294"/>
-              <path class="map-road thin" d="M164 148H255M157 250H265M354 241H486M346 443H474"/>
+              <path class="map-blocks" d="M115 92h168v82H115zM340 196h155v90H340zM78 334h104v118H78zM239 338h142v118H239zM440 330h112v125H440z"/>
+              <path class="map-road main" d="M210 72V323"/><path class="map-road main" d="M210 365H76"/><path class="map-road side" d="M210 403L278 443H232M210 403L142 443H188"/><path class="map-road side" d="M102 365V269"/>
+              <path class="map-road thin" d="M164 148H255M157 250H265M86 318H174M158 432H262"/>
               <circle class="map-place porta" cx="210" cy="66" r="23"/><path class="map-arch" d="M193 74v-16c0-11 15-11 15 0v16m4 0v-16c0-11 15-11 15 0v16"/>
-              <circle class="map-place market" cx="210" cy="390" r="52"/><circle class="map-fountain" cx="210" cy="390" r="14"/><path class="map-place dom" d="M487 334v-36h38v36m-30-36v-19m22 19v-19"/>
-              <path class="map-route-line" d="M210 88V338M262 390H429M429 390l58-49"/>
+              <circle class="map-place market" cx="210" cy="365" r="45"/><circle class="map-fountain" cx="210" cy="365" r="14"/><path class="map-place dom" d="M73 309v-36h38v36m-30-36v-19m22 19v-19"/><circle class="map-place korn" cx="210" cy="470" r="22"/>
+              <path class="map-route-line" d="M210 88V313M158 365H88M88 365l4-49M210 403L278 443H232M210 403L142 443H188"/>
               <circle class="map-player-marker" id="map-player-large" cx="210" cy="96" r="9"/>
+              <text class="map-target-marker" id="map-quest-target" x="190" y="352">✦</text>
               <text x="210" y="30" text-anchor="middle" class="map-north">N ↑</text>
               <text x="244" y="71" class="map-label">PORTA NIGRA</text><text x="224" y="220" class="map-label">SIMEONSTRASSE</text>
-              <text x="210" y="474" text-anchor="middle" class="map-label">HAUPTMARKT</text><text x="353" y="376" class="map-label">STERNSTRASSE</text>
-              <text x="474" y="272" class="map-label">DOMFREIHOF</text><text x="88" y="416" class="map-small-label">JAKOBSTR.</text>
-              <text x="144" y="500" class="map-small-label">BROTSTR.</text><text x="244" y="500" class="map-small-label">FLEISCHSTR.</text>
+              <text x="210" y="420" text-anchor="middle" class="map-label">HAUPTMARKT</text><text x="88" y="351" class="map-label">STERNSTRASSE</text>
+              <text x="73" y="272" class="map-label">DOMFREIHOF</text><text x="306" y="416" class="map-small-label">JAKOBSTR.</text>
+              <text x="76" y="470" class="map-small-label">BROTSTR.</text><text x="245" y="470" class="map-small-label">FLEISCHSTR.</text><text x="210" y="507" text-anchor="middle" class="map-small-label">KORNMARKT</text>
             </svg>
             <div class="map-legend"><span><i class="legend-player"></i>Du bist hier</span><span><i class="legend-route"></i>Spielweg</span></div>
           </div>
@@ -76,6 +106,9 @@ export class GameUI {
       hud: this.app.querySelector('#market-hud'),
       name: this.app.querySelector('#character-name'),
       startButton: this.app.querySelector('#start-game'),
+      settings: this.app.querySelector('#menu-settings'),
+      credits: this.app.querySelector('#menu-credits'),
+      menuMessage: this.app.querySelector('#menu-message'),
       avatar: this.app.querySelector('#avatar-letter'),
       playerName: this.app.querySelector('#player-name'),
       visitors: this.app.querySelector('#visitor-count'),
@@ -86,18 +119,45 @@ export class GameUI {
       locationKicker: this.app.querySelector('#location-kicker'),
       zoneMood: this.app.querySelector('#zone-mood'),
       mapPlayer: this.app.querySelector('#map-player'),
+      mapQuestTarget: this.app.querySelector('#map-quest-target'),
       joystick: this.app.querySelector('#joystick'),
+      questTitle: this.app.querySelector('#quest-title'),
+      questCount: this.app.querySelector('#quest-count'),
+      questObjective: this.app.querySelector('#quest-objective'),
+      interact: this.app.querySelector('#interact-button'),
+      interactLabel: this.app.querySelector('#interact-label'),
+      mobileInteract: this.app.querySelector('#mobile-interact'),
+      dialogue: this.app.querySelector('#dialogue-layer'),
+      memoryToast: this.app.querySelector('#memory-toast'),
+      finale: this.app.querySelector('#demo-finale'),
+      returnToMenu: this.app.querySelector('#return-to-menu'),
     };
   }
 
   bindEvents() {
-    this.app.querySelectorAll('.swatches button').forEach((button) => button.addEventListener('click', () => {
+    this.app.querySelectorAll('.menu-choices button').forEach((button) => button.addEventListener('click', () => {
       this.profile[button.parentElement.dataset.field] = button.dataset.value;
       button.parentElement.querySelectorAll('button').forEach((item) => item.classList.toggle('active', item === button));
+      this.emitProfileChange();
     }));
+    this.elements.name.addEventListener('input', () => {
+      this.profile.name = this.elements.name.value.trim().slice(0, 20) || 'Gast';
+      this.emitProfileChange();
+    });
     this.elements.startButton.addEventListener('click', () => this.callbacks.onStart?.({ ...this.profile, name: this.elements.name.value.trim() || 'Gast' }));
+    this.elements.settings.addEventListener('click', () => {
+      this.elements.menuMessage.textContent = 'Einstellungen: Grafik wird automatisch an dein Gerät angepasst. Audio startet nach deiner ersten Eingabe.';
+    });
+    this.elements.credits.addEventListener('click', () => {
+      this.elements.menuMessage.textContent = 'SKG · Auf der Suche nach dem Goldenen Viezporz · entwickelt für Trier.';
+    });
+    this.elements.start.addEventListener('pointerdown', () => this.callbacks.onMenuInteraction?.(), { once: true });
+    this.elements.start.querySelectorAll('button').forEach((button) => button.addEventListener('mouseenter', () => this.callbacks.onMenuHover?.()));
     this.elements.openMap.addEventListener('click', () => this.toggleMap());
     this.elements.closeMap.addEventListener('click', () => this.toggleMap(false));
+    this.elements.interact.addEventListener('click', () => this.callbacks.onInteract?.());
+    this.elements.mobileInteract.addEventListener('click', () => this.callbacks.onInteract?.());
+    this.elements.returnToMenu.addEventListener('click', () => this.callbacks.onReturnToMenu?.());
     window.addEventListener('keydown', (event) => {
       if (event.code === 'KeyM') this.toggleMap();
       if (event.code === 'Escape') this.toggleMap(false);
@@ -131,33 +191,122 @@ export class GameUI {
   showStart(saved) {
     this.elements.boot.classList.add('hidden');
     if (saved) {
-      this.profile = { ...this.profile, ...saved };
+      const previousOutfits = { wald: 'dunkelgruen', blau: 'dunkelblau', kupfer: 'weinrot' };
+      const previousHair = { dunkel: 'schwarz', hell: 'blond' };
+      this.profile = {
+        ...this.profile,
+        ...saved,
+        outfit: previousOutfits[saved.outfit] || saved.outfit || this.profile.outfit,
+        hair: previousHair[saved.hair] || saved.hair || this.profile.hair,
+      };
       this.elements.name.value = this.profile.name;
-      this.app.querySelectorAll('.swatches button').forEach((button) => button.classList.toggle('active', button.dataset.value === this.profile[button.parentElement.dataset.field]));
+      this.app.querySelectorAll('.menu-choices button').forEach((button) => button.classList.toggle('active', button.dataset.value === this.profile[button.parentElement.dataset.field]));
     }
   }
 
-  begin(profile, visitors) {
+  emitProfileChange() {
+    this.callbacks.onProfileChange?.({ ...this.profile, name: this.elements.name.value.trim() || 'Gast' });
+  }
+
+  begin(profile, visitors, showHud = true) {
     this.elements.start.classList.add('hidden');
-    this.elements.hud.classList.remove('hidden');
+    this.elements.hud.classList.toggle('hidden', !showHud);
     this.elements.playerName.textContent = profile.name;
     this.elements.avatar.textContent = profile.name.slice(0, 1).toUpperCase();
     this.updateMarket(visitors);
   }
 
+  revealHud() {
+    this.elements.hud.classList.remove('hidden');
+  }
+
   updateMarket(visitors, location = { name: 'Hauptmarkt', zone: 'hauptmarkt' }) {
     this.elements.visitors.innerHTML = `<b>${visitors}</b><span>Menschen auf dem Platz</span>`;
-    const names = { porta: 'PORTA NIGRA · TRIER', simeonstrasse: 'SIMEONSTRASSE · TRIER', hauptmarkt: 'HAUPTMARKT · TRIER', sternstrasse: 'STERNSTRASSE · TRIER', domfreihof: 'DOMFREIHOF · TRIER' };
-    const moods = { porta: 'Warme Sonne · Ankommen in Trier', simeonstrasse: 'Einkaufsstraße · Stadt im Abendlicht', hauptmarkt: 'Golden Hour · lebendiger Abend', sternstrasse: 'Warme Gasse · Blick zum Dom', domfreihof: 'Offener Himmel · Domglocken' };
-    const progress = { porta: '6%', simeonstrasse: '25%', hauptmarkt: '51%', sternstrasse: '74%', domfreihof: '93%' };
+    const names = { porta: 'PORTA NIGRA · TRIER', simeonstrasse: 'SIMEONSTRASSE · TRIER', hauptmarkt: 'HAUPTMARKT · TRIER', sternstrasse: 'STERNSTRASSE · TRIER', domfreihof: 'DOMFREIHOF · TRIER', brotstrasse: 'BROTSTRASSE · TRIER', fleischstrasse: 'FLEISCHSTRASSE · TRIER', kornmarkt: 'KORNMARKT · TRIER' };
+    const moods = { porta: 'Warme Sonne · Ankommen in Trier', simeonstrasse: 'Einkaufsstraße · Stadt im Abendlicht', hauptmarkt: 'Golden Hour · lebendiger Abend', sternstrasse: 'Warme Gasse · Blick zum Dom', domfreihof: 'Offener Himmel · Domglocken', brotstrasse: 'Ladenfronten · warmer Feierabend', fleischstrasse: 'Altstadtgasse · Stimmen und Viez', kornmarkt: 'Weiter Platz · Brunnen und Abendlicht' };
+    const progress = { porta: '6%', simeonstrasse: '25%', hauptmarkt: '51%', sternstrasse: '71%', domfreihof: '91%', brotstrasse: '42%', fleischstrasse: '63%', kornmarkt: '55%' };
     this.elements.locationName.textContent = names[location.zone] || names.hauptmarkt;
     this.elements.locationKicker.textContent = `${location.name || 'Hauptmarkt'} · Trier`;
     this.elements.zoneMood.textContent = moods[location.zone] || moods.hauptmarkt;
     this.elements.mapPlayer.style.left = progress[location.zone] || progress.hauptmarkt;
-    const mapPositions = { porta: ['210', '96'], simeonstrasse: ['210', '232'], hauptmarkt: ['210', '390'], sternstrasse: ['355', '390'], domfreihof: ['487', '334'] };
+    const mapPositions = { porta: ['210', '96'], simeonstrasse: ['210', '232'], hauptmarkt: ['210', '365'], sternstrasse: ['116', '365'], domfreihof: ['92', '309'], brotstrasse: ['142', '443'], fleischstrasse: ['278', '443'], kornmarkt: ['210', '470'] };
     const [x, y] = mapPositions[location.zone] || mapPositions.hauptmarkt;
     this.app.querySelector('#map-player-large').setAttribute('cx', x);
     this.app.querySelector('#map-player-large').setAttribute('cy', y);
+  }
+
+  setQuest({ title, objective, count, targetId = null }) {
+    this.elements.questTitle.textContent = title;
+    this.elements.questObjective.textContent = objective;
+    this.elements.questCount.textContent = count;
+    const targets = { johannes: ['180', '352'], marc: ['72', '286'], juergen: ['220', '202'], charly: ['196', '466'], weber: ['277', '431'], return: ['180', '352'] };
+    const target = targets[targetId];
+    this.elements.mapQuestTarget.style.display = target ? 'block' : 'none';
+    if (target) {
+      this.elements.mapQuestTarget.setAttribute('x', target[0]);
+      this.elements.mapQuestTarget.setAttribute('y', target[1]);
+    }
+  }
+
+  showInteraction(label) {
+    const visible = Boolean(label);
+    this.elements.interact.classList.toggle('hidden', !visible);
+    this.elements.mobileInteract.classList.toggle('hidden', !visible);
+    if (visible) this.elements.interactLabel.textContent = label;
+  }
+
+  showDialogue(lines, onFinished) {
+    let index = 0;
+    const renderLine = () => {
+      const line = lines[index];
+      const finalLine = index === lines.length - 1;
+      this.elements.dialogue.innerHTML = `<article class="dialogue-card"><div class="dialogue-portrait"><i>${this.escape(line.speaker.slice(0, 1))}</i></div><div class="dialogue-copy"><b>${this.escape(line.speaker)}</b><p>${this.escape(line.text)}</p><button class="dialogue-next" type="button">${finalLine ? 'Weiter' : 'Weiter'} <span>→</span></button></div></article>`;
+      this.elements.dialogue.querySelector('button').addEventListener('click', () => {
+        index += 1;
+        if (index < lines.length) renderLine();
+        else {
+          this.elements.dialogue.classList.add('hidden');
+          this.elements.dialogue.innerHTML = '';
+          onFinished?.();
+        }
+      });
+    };
+    this.elements.dialogue.classList.remove('hidden');
+    renderLine();
+  }
+
+  showChoice({ speaker, text, choices = [] }, onChosen) {
+    this.elements.dialogue.innerHTML = `<article class="dialogue-card dialogue-choice-card"><div class="dialogue-portrait"><i>${this.escape(String(speaker || '?').slice(0, 1))}</i></div><div class="dialogue-copy"><b>${this.escape(speaker || '')}</b><p>${this.escape(text || '')}</p><div class="dialogue-choice-list">${choices.map((choice) => `<button class="dialogue-choice" type="button" data-choice="${this.escape(choice.id)}">${this.escape(choice.label)}</button>`).join('')}</div></div></article>`;
+    this.elements.dialogue.querySelectorAll('button').forEach((button) => button.addEventListener('click', () => {
+      this.elements.dialogue.classList.add('hidden');
+      this.elements.dialogue.innerHTML = '';
+      onChosen?.(button.dataset.choice);
+    }));
+    this.elements.dialogue.classList.remove('hidden');
+  }
+
+  showMemory(label) {
+    window.clearTimeout(this.memoryTimer);
+    this.elements.memoryToast.textContent = `Erinnerung: ${label}`;
+    this.elements.memoryToast.classList.remove('hidden');
+    this.memoryTimer = window.setTimeout(() => this.elements.memoryToast.classList.add('hidden'), 3800);
+  }
+
+  showEnding() {
+    this.elements.finale.classList.remove('hidden');
+  }
+
+  returnToMenu(saved) {
+    this.elements.finale.classList.add('hidden');
+    this.elements.dialogue.classList.add('hidden');
+    this.elements.dialogue.innerHTML = '';
+    this.elements.hud.classList.add('hidden');
+    this.elements.start.classList.remove('hidden');
+    this.showStart(saved);
+  }
+
+  escape(value) {
+    return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
   }
 
   toggleMap(force) {
