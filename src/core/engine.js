@@ -313,15 +313,10 @@ export class GameEngine {
     const streetZone = ['porta', 'simeonstrasse', 'brotstrasse', 'fleischstrasse'].includes(this.location.zone);
     const plazaZone = ['hauptmarkt', 'domfreihof', 'kornmarkt'].includes(this.location.zone);
     const portraitMobile = this.isTouchDevice && window.innerHeight > window.innerWidth;
-    // On a tall phone screen the old plaza bias pulled the camera back toward
-    // the world centre. At the Domfreihof this could leave the player at the
-    // edge of the frame. Portrait play follows the hero directly instead.
-    const focusBias = portraitMobile ? 0 : streetZone ? .035 : this.location.zone === 'kornmarkt' ? .08 : .25;
-    this.cameraFocus.set(
-      THREE.MathUtils.lerp(this.player.position.x, 0, focusBias),
-      0,
-      THREE.MathUtils.lerp(this.player.position.z, 2.5, focusBias),
-    );
+    // The player's position is the camera target in every playable area.
+    // Landmarks may influence height and zoom, but never move the hero away
+    // from the middle of the screen.
+    this.cameraFocus.set(this.player.position.x, 0, this.player.position.z);
     // Keep the hero visible: a classic RPG camera is high enough to read the
     // walking space, but retains enough tilt for façades and landmarks.
     const cameraHeight = this.location.zone === 'simeonstrasse' || this.location.zone === 'brotstrasse' || this.location.zone === 'fleischstrasse' ? 13.4 : this.location.zone === 'sternstrasse' ? 14.1 : this.location.zone === 'domfreihof' || this.location.zone === 'kornmarkt' ? 17.2 : this.location.zone === 'porta' ? 14.4 : 14.8;
