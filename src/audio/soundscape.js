@@ -78,11 +78,12 @@ export class Soundscape {
     if (!this.context || !this.master || !zone || zone === this.zone) return;
     this.zone = zone;
     const now = this.context.currentTime;
-    const target = this.volume * (zone === 'domfreihof' ? .085 : zone === 'sternstrasse' ? .105 : .12);
+    const target = this.volume * (zone === 'domfreihof' ? .085 : zone === 'porta' ? .115 : zone === 'simeonstrasse' || zone === 'sternstrasse' ? .105 : .12);
     this.master.gain.cancelScheduledValues(now);
     this.master.gain.setValueAtTime(this.master.gain.value, now);
     this.master.gain.linearRampToValueAtTime(target, now + .65);
     if (zone === 'domfreihof') this.chime([392, 523.25, 659.25]);
+    if (zone === 'porta') this.chime([196, 293.66]);
     if (zone === 'sternstrasse') this.chime([329.63, 392]);
   }
 
