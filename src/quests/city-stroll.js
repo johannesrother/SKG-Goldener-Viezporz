@@ -2,7 +2,7 @@ const STAGES = [
   {
     id: 'johannes',
     name: 'Johannes',
-    objective: 'Geh zum Weinstand auf dem Hauptmarkt.',
+    objective: 'Treffe Johannes am Weinstand.',
   },
   {
     id: 'marc',
