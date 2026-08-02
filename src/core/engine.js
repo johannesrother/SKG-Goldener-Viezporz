@@ -33,6 +33,7 @@ export class GameEngine {
     this.baseZoom = window.innerWidth < 620 ? .9 : 1.0;
     this.manualZoomOffset = 0;
     this.camera.zoom = this.baseZoom;
+    this.isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
     this.qualityProfile = this.chooseQualityProfile();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.qualityProfile !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -75,6 +76,10 @@ export class GameEngine {
   }
 
   chooseQualityProfile() {
+    // Phones have a high device pixel ratio but a much tighter heat and battery
+    // budget than a desktop. Keep their fill-rate predictable, even in
+    // landscape where the viewport can be wider than a tablet.
+    if (this.isTouchDevice) return window.innerWidth < 900 ? 'low' : 'medium';
     if (window.innerWidth < 560 || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4)) return 'low';
     return window.devicePixelRatio > 1.5 && (navigator.hardwareConcurrency || 4) >= 8 ? 'high' : 'medium';
   }
@@ -82,7 +87,7 @@ export class GameEngine {
   pixelRatio() {
     // The isometric view still reads crisply at these caps, while the lower
     // fill rate keeps the busy square responsive on notebooks and phones.
-    return this.qualityProfile === 'high' ? 1.45 : this.qualityProfile === 'medium' ? 1.2 : 1;
+    return this.qualityProfile === 'high' ? 1.45 : this.qualityProfile === 'medium' ? (this.isTouchDevice ? 1 : 1.2) : .9;
   }
 
   getPosition() {
@@ -158,6 +163,7 @@ export class GameEngine {
 
   bindInput() {
     this.onResize = () => this.resize();
+    this.onViewportResize = () => this.resize();
     this.onKeyDown = (event) => {
       if (event.code === 'KeyE' || event.code === 'Enter') {
         this.callbacks.onInteract?.(this.getPosition());
@@ -184,6 +190,7 @@ export class GameEngine {
       this.manualZoomOffset = THREE.MathUtils.clamp(this.manualZoomOffset - event.deltaY * .00065, -.22, .24);
     };
     window.addEventListener('resize', this.onResize);
+    window.visualViewport?.addEventListener('resize', this.onViewportResize);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     this.canvas.addEventListener('pointerdown', this.onPointerDown);
@@ -193,12 +200,12 @@ export class GameEngine {
   resize() {
     const width = this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.clientHeight || window.innerHeight;
-    this.baseZoom = width < 620 ? .9 : 1.0;
+    this.baseZoom = width < 620 ? .86 : this.isTouchDevice && width < 900 ? .93 : 1.0;
     this.renderer.setSize(width, height, false);
     const aspect = width / height;
     // A closer default makes the real façades, tables and visitors legible;
     // the whole square remains available through the gentle scroll zoom.
-    const viewHeight = width < 620 ? 18.2 : 22.4;
+    const viewHeight = width < 620 ? 19.6 : this.isTouchDevice && width < 900 ? 21 : 22.4;
     this.camera.left = (-viewHeight * aspect) / 2;
     this.camera.right = (viewHeight * aspect) / 2;
     this.camera.top = viewHeight / 2;
@@ -348,6 +355,7 @@ export class GameEngine {
   destroy() {
     this.running = false;
     window.removeEventListener('resize', this.onResize);
+    window.visualViewport?.removeEventListener('resize', this.onViewportResize);
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     this.canvas.removeEventListener('pointerdown', this.onPointerDown);
