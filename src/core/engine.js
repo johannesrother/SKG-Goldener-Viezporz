@@ -1,7 +1,27 @@
 import * as THREE from 'three';
-import { createWorld, makePerson } from '../world/world.js';
+import { animateCharacterPose, createWorld, makePerson, setPersonStyle } from '../world/world.js';
 
-const OUTFITS = { wald: 0x506b42, blau: 0x3b5874, kupfer: 0x9b623d };
+const OUTFITS = {
+  beige: 0xc1a17b,
+  dunkelgruen: 0x365a47,
+  weinrot: 0x783f43,
+  dunkelblau: 0x344c6b,
+  anthrazit: 0x3e454a,
+  // Older saved profiles remain readable after the menu redesign.
+  wald: 0x365a47,
+  blau: 0x344c6b,
+  kupfer: 0x783f43,
+};
+
+const HAIR = {
+  schwarz: 0x211b1b,
+  braun: 0x603c27,
+  blond: 0xba8641,
+  rot: 0x8f4632,
+  grau: 0x7d7a70,
+  dunkel: 0x211b1b,
+  hell: 0xba8641,
+};
 
 export class GameEngine {
   constructor(canvas, profile, callbacks = {}) {
@@ -10,11 +30,16 @@ export class GameEngine {
     this.scene = new THREE.Scene();
     this.camera = new THREE.OrthographicCamera(-10, 10, 7, -7, .1, 120);
     this.camera.position.set(15, 22, 17);
+    this.baseZoom = window.innerWidth < 620 ? .9 : 1.0;
+    this.manualZoomOffset = 0;
+    this.camera.zoom = this.baseZoom;
     this.qualityProfile = this.chooseQualityProfile();
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: this.qualityProfile !== 'low', powerPreference: 'high-performance' });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.18;
+    // A quieter grade preserves the warm evening mood while giving the scene
+    // the richer, less plastic contrast of a classic isometric RPG.
+    this.renderer.toneMappingExposure = .96;
     this.renderer.shadowMap.enabled = this.qualityProfile !== 'low';
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.pixelRatio()));
@@ -28,10 +53,21 @@ export class GameEngine {
     this.keys = new Set();
     this.joystick = new THREE.Vector2();
     this.running = true;
+    this.inputEnabled = true;
+    this.cinematic = null;
+    this.marketIntro = null;
+    this.wineMoment = null;
+    this.menuPresentation = false;
+    this.menuFocus = new THREE.Vector3(0, 0, .3);
     this.profile = profile;
     this.world = createWorld(this.scene, this.qualityProfile);
-    this.player = makePerson({ name: profile.name, outfit: OUTFITS[profile.outfit] || OUTFITS.wald, scale: 1.08 });
-    this.player.position.set(-27, 0, 56.2);
+    this.player = makePerson({
+      name: profile.name,
+      outfit: OUTFITS[profile.outfit] || OUTFITS.dunkelgruen,
+      hair: HAIR[profile.hair] || HAIR.braun,
+      scale: 1.08,
+    });
+    this.player.position.set(1.8, 0, 7.4);
     this.world.root.add(this.player);
     this.resize();
     this.bindInput();
@@ -44,7 +80,9 @@ export class GameEngine {
   }
 
   pixelRatio() {
-    return this.qualityProfile === 'high' ? 1.65 : this.qualityProfile === 'medium' ? 1.35 : 1;
+    // The isometric view still reads crisply at these caps, while the lower
+    // fill rate keeps the busy square responsive on notebooks and phones.
+    return this.qualityProfile === 'high' ? 1.45 : this.qualityProfile === 'medium' ? 1.2 : 1;
   }
 
   getPosition() {
@@ -52,18 +90,82 @@ export class GameEngine {
   }
 
   setDestination(x, z) {
+    if (!this.inputEnabled) return;
     this.destination = this.world.clampPosition(new THREE.Vector3(x, 0, z));
   }
 
   setJoystick(x, y) {
+    if (!this.inputEnabled) return;
     this.joystick.set(x, y);
     if (this.joystick.lengthSq() > .015) this.destination = null;
+  }
+
+  beginCinematic(target, duration = 5.6) {
+    this.destination = null;
+    this.keys.clear();
+    this.joystick.set(0, 0);
+    this.inputEnabled = false;
+    this.cinematic = { target: new THREE.Vector3(target.x, 0, target.z), endsAt: this.clock.elapsedTime + duration };
+  }
+
+  beginMarketIntro(duration = 5.2) {
+    this.destination = null;
+    this.keys.clear();
+    this.joystick.set(0, 0);
+    this.inputEnabled = false;
+    this.marketIntro = {
+      startedAt: this.clock.elapsedTime,
+      duration,
+      fromPosition: new THREE.Vector3(20, 27, 25),
+      toPosition: new THREE.Vector3(this.player.position.x + 10.8, 14.8, this.player.position.z + 17.4),
+      fromFocus: new THREE.Vector3(-2.2, 0, -1.2),
+      toFocus: this.player.position.clone(),
+    };
+    this.camera.position.copy(this.marketIntro.fromPosition);
+    this.cameraFocus.copy(this.marketIntro.fromFocus);
+  }
+
+  beginWineMoment(target) {
+    this.destination = null;
+    this.keys.clear();
+    this.joystick.set(0, 0);
+    this.inputEnabled = false;
+    this.wineMoment = { target: new THREE.Vector3(target.x, 0, target.z) };
+  }
+
+  setMenuPresentation(active = true) {
+    this.menuPresentation = active;
+    this.inputEnabled = !active;
+    this.destination = null;
+    this.keys.clear();
+    this.joystick.set(0, 0);
+    if (active) {
+      // Offset the hero from the market centre so the menu can remain calm on
+      // the left while the actual game model reads as a character preview.
+      this.player.position.set(-5.15, 0, 3.15);
+      this.player.rotation.y = .72;
+      this.menuFocus.set(0, 0, .35);
+    }
+  }
+
+  setPreviewStyle(profile = {}) {
+    this.profile = { ...this.profile, ...profile };
+    setPersonStyle(this.player, {
+      outfit: OUTFITS[this.profile.outfit] || OUTFITS.dunkelgruen,
+      hair: HAIR[this.profile.hair] || HAIR.braun,
+    });
   }
 
   bindInput() {
     this.onResize = () => this.resize();
     this.onKeyDown = (event) => {
+      if (event.code === 'KeyE' || event.code === 'Enter') {
+        this.callbacks.onInteract?.(this.getPosition());
+        event.preventDefault();
+        return;
+      }
       if (!['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.code)) return;
+      if (!this.inputEnabled) return;
       this.keys.add(event.code);
       this.destination = null;
       event.preventDefault();
@@ -79,8 +181,7 @@ export class GameEngine {
       if (this.raycaster.ray.intersectPlane(this.walkPlane, hit)) this.setDestination(hit.x, hit.z);
     };
     this.onWheel = (event) => {
-      this.camera.zoom = THREE.MathUtils.clamp(this.camera.zoom - event.deltaY * .00065, .76, 1.25);
-      this.camera.updateProjectionMatrix();
+      this.manualZoomOffset = THREE.MathUtils.clamp(this.manualZoomOffset - event.deltaY * .00065, -.22, .24);
     };
     window.addEventListener('resize', this.onResize);
     window.addEventListener('keydown', this.onKeyDown);
@@ -92,11 +193,12 @@ export class GameEngine {
   resize() {
     const width = this.canvas.clientWidth || window.innerWidth;
     const height = this.canvas.clientHeight || window.innerHeight;
+    this.baseZoom = width < 620 ? .9 : 1.0;
     this.renderer.setSize(width, height, false);
     const aspect = width / height;
     // A closer default makes the real façades, tables and visitors legible;
     // the whole square remains available through the gentle scroll zoom.
-    const viewHeight = width < 620 ? 16.8 : 20.8;
+    const viewHeight = width < 620 ? 18.2 : 22.4;
     this.camera.left = (-viewHeight * aspect) / 2;
     this.camera.right = (viewHeight * aspect) / 2;
     this.camera.top = viewHeight / 2;
@@ -108,18 +210,32 @@ export class GameEngine {
     const vector = new THREE.Vector2();
     if (this.keys.has('KeyA') || this.keys.has('ArrowLeft')) vector.x -= 1;
     if (this.keys.has('KeyD') || this.keys.has('ArrowRight')) vector.x += 1;
-    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) vector.y -= 1;
-    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) vector.y += 1;
+    if (this.keys.has('KeyW') || this.keys.has('ArrowUp')) vector.y += 1;
+    if (this.keys.has('KeyS') || this.keys.has('ArrowDown')) vector.y -= 1;
     return vector;
   }
 
+  cameraRelativeMovement(input, speed) {
+    // Movement follows the screen, rather than the world's fixed axes. This
+    // keeps W/A/S/D intuitive when the soft isometric camera changes its
+    // follow position between streets and plazas.
+    const forward = this.camera.getWorldDirection(new THREE.Vector3());
+    forward.y = 0;
+    forward.normalize();
+    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+    return forward.multiplyScalar(input.y).addScaledVector(right, input.x).normalize().multiplyScalar(speed);
+  }
+
   updatePlayer(delta, time) {
-    const keyboard = this.keyboardVector();
-    const input = keyboard.lengthSq() > 0 ? keyboard : this.joystick;
+    const keyboard = this.inputEnabled ? this.keyboardVector() : new THREE.Vector2();
+    // Touch input is measured downwards by the browser, so invert its Y axis
+    // once before applying the same screen-relative movement as the keyboard.
+    const joystick = new THREE.Vector2(this.joystick.x, -this.joystick.y);
+    const input = keyboard.lengthSq() > 0 ? keyboard : joystick;
     let movement = new THREE.Vector3();
-    if (input.lengthSq() > .005) {
-      movement.set(input.x, 0, input.y).normalize().multiplyScalar(4.8 * delta);
-    } else if (this.destination) {
+    if (this.inputEnabled && input.lengthSq() > .005) {
+      movement = this.cameraRelativeMovement(input, 4.8 * delta);
+    } else if (this.inputEnabled && this.destination) {
       const distance = this.destination.clone().sub(this.player.position);
       distance.y = 0;
       if (distance.length() < .1) this.destination = null;
@@ -134,21 +250,87 @@ export class GameEngine {
     } else {
       this.player.position.y = Math.sin(time * 1.75) * .008;
     }
+    animateCharacterPose(this.player, time, movement.lengthSq() > 0);
+    if (this.player.userData.playerMarker) {
+      const pulse = 1 + Math.sin(time * 3.2) * .045;
+      this.player.userData.playerMarker.scale.setScalar(pulse);
+    }
   }
 
   updateCamera(delta) {
+    if (this.marketIntro) {
+      const intro = this.marketIntro;
+      const progress = THREE.MathUtils.clamp((this.clock.elapsedTime - intro.startedAt) / intro.duration, 0, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      this.cameraFocus.lerpVectors(intro.fromFocus, intro.toFocus, eased);
+      this.camera.position.lerpVectors(intro.fromPosition, intro.toPosition, eased);
+      this.camera.lookAt(this.cameraFocus.x, .42, this.cameraFocus.z);
+      if (progress >= 1) {
+        this.marketIntro = null;
+        this.inputEnabled = true;
+        this.callbacks.onIntroEnd?.();
+      }
+      return;
+    }
+    if (this.cinematic) {
+      const target = this.cinematic.target;
+      this.cameraFocus.lerp(target, 1 - Math.exp(-delta * 2.1));
+      const desired = new THREE.Vector3(target.x + 9.2, 12.2, target.z + 12.8);
+      this.camera.position.lerp(desired, 1 - Math.exp(-delta * 1.75));
+      this.camera.lookAt(this.cameraFocus.x, .45, this.cameraFocus.z);
+      if (this.clock.elapsedTime >= this.cinematic.endsAt) {
+        this.cinematic = null;
+        this.callbacks.onCinematicEnd?.();
+      }
+      return;
+    }
+    if (this.wineMoment) {
+      const target = this.wineMoment.target;
+      this.cameraFocus.lerp(target, 1 - Math.exp(-delta * 2.5));
+      const desired = new THREE.Vector3(target.x + 7.4, 10.8, target.z + 12.2);
+      this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.2));
+      this.camera.lookAt(this.cameraFocus.x, .45, this.cameraFocus.z);
+      return;
+    }
+    if (this.menuPresentation) {
+      this.cameraFocus.lerp(this.menuFocus, 1 - Math.exp(-delta * 1.35));
+      const desired = new THREE.Vector3(this.menuFocus.x + 10.6, 14.6, this.menuFocus.z + 17.7);
+      this.camera.position.lerp(desired, 1 - Math.exp(-delta * 1.15));
+      this.camera.lookAt(this.cameraFocus.x, .55, this.cameraFocus.z);
+      // The preview remains the real in-game character and therefore shares
+      // its idle animation, materials and silhouette with play mode.
+      this.player.rotation.y += delta * .16;
+      return;
+    }
     this.location = this.world.getLocation(this.player.position);
-    const streetZone = this.location.zone === 'porta' || this.location.zone === 'simeonstrasse';
-    const focusBias = streetZone ? .035 : .25;
+    const streetZone = ['porta', 'simeonstrasse', 'brotstrasse', 'fleischstrasse'].includes(this.location.zone);
+    const plazaZone = ['hauptmarkt', 'domfreihof', 'kornmarkt'].includes(this.location.zone);
+    const focusBias = streetZone ? .035 : this.location.zone === 'kornmarkt' ? .08 : .25;
     this.cameraFocus.set(
       THREE.MathUtils.lerp(this.player.position.x, 0, focusBias),
       0,
       THREE.MathUtils.lerp(this.player.position.z, 2.5, focusBias),
     );
-    const cameraHeight = this.location.zone === 'simeonstrasse' ? 16.5 : this.location.zone === 'sternstrasse' ? 16.7 : this.location.zone === 'domfreihof' || this.location.zone === 'porta' ? 21.2 : 18.5;
-    const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, cameraHeight, this.cameraFocus.z + 16);
+    // Keep the hero visible: a classic RPG camera is high enough to read the
+    // walking space, but retains enough tilt for façades and landmarks.
+    const cameraHeight = this.location.zone === 'simeonstrasse' || this.location.zone === 'brotstrasse' || this.location.zone === 'fleischstrasse' ? 13.4 : this.location.zone === 'sternstrasse' ? 14.1 : this.location.zone === 'domfreihof' || this.location.zone === 'kornmarkt' ? 17.2 : this.location.zone === 'porta' ? 14.4 : 14.8;
+    const desired = streetZone
+      // Sitting close to the middle of a street prevents the nearest house
+      // row from covering the player, while still keeping an oblique view.
+      ? new THREE.Vector3(this.cameraFocus.x + 3.6, cameraHeight, this.cameraFocus.z - 19.8)
+      : new THREE.Vector3(this.cameraFocus.x + 10.8, cameraHeight, this.cameraFocus.z + 17.4);
     this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
-    this.camera.lookAt(this.cameraFocus.x, 0, this.cameraFocus.z);
+    this.camera.lookAt(this.cameraFocus.x, .3, this.cameraFocus.z);
+    // A gentle, automatic widening at the three plazas lets their landmarks
+    // breathe. The player's wheel zoom remains an offset, so it is never
+    // overridden while they explore.
+    const zoneZoom = plazaZone ? .91 : streetZone ? 1.025 : .97;
+    const desiredZoom = THREE.MathUtils.clamp(this.baseZoom * zoneZoom + this.manualZoomOffset, .76, 1.25);
+    const zoomAlpha = 1 - Math.exp(-delta * 1.7);
+    if (Math.abs(this.camera.zoom - desiredZoom) > .0001) {
+      this.camera.zoom = THREE.MathUtils.lerp(this.camera.zoom, desiredZoom, zoomAlpha);
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   animate() {
