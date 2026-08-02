@@ -31,7 +31,7 @@ export class GameEngine {
     this.profile = profile;
     this.world = createWorld(this.scene, this.qualityProfile);
     this.player = makePerson({ name: profile.name, outfit: OUTFITS[profile.outfit] || OUTFITS.wald, scale: 1.08 });
-    this.player.position.set(-5.4, 0, -8.6);
+    this.player.position.set(-27, 0, 56.2);
     this.world.root.add(this.player);
     this.resize();
     this.bindInput();
@@ -138,12 +138,14 @@ export class GameEngine {
 
   updateCamera(delta) {
     this.location = this.world.getLocation(this.player.position);
+    const streetZone = this.location.zone === 'porta' || this.location.zone === 'simeonstrasse';
+    const focusBias = streetZone ? .035 : .25;
     this.cameraFocus.set(
-      THREE.MathUtils.lerp(this.player.position.x, 0, .25),
+      THREE.MathUtils.lerp(this.player.position.x, 0, focusBias),
       0,
-      THREE.MathUtils.lerp(this.player.position.z, 2.5, .25),
+      THREE.MathUtils.lerp(this.player.position.z, 2.5, focusBias),
     );
-    const cameraHeight = this.location.zone === 'sternstrasse' ? 16.7 : this.location.zone === 'domfreihof' ? 21.2 : 18.5;
+    const cameraHeight = this.location.zone === 'simeonstrasse' ? 16.5 : this.location.zone === 'sternstrasse' ? 16.7 : this.location.zone === 'domfreihof' || this.location.zone === 'porta' ? 21.2 : 18.5;
     const desired = new THREE.Vector3(this.cameraFocus.x + 13.5, cameraHeight, this.cameraFocus.z + 16);
     this.camera.position.lerp(desired, 1 - Math.exp(-delta * 2.35));
     this.camera.lookAt(this.cameraFocus.x, 0, this.cameraFocus.z);
