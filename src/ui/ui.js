@@ -60,7 +60,7 @@ export class GameUI {
           <p class="menu-atmosphere">Hauptmarkt · Trier · Klick zum Laufen · WASD · Mausrad zum Zoomen</p>
         </section>
         <section class="market-hud hidden" id="market-hud" aria-label="Trierer Altstadt Informationen">
-          <aside class="market-card"><p class="eyebrow" id="location-kicker">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span><span id="zone-mood">Golden Hour · lebendiger Abend</span></p><div class="quest-brief"><span>✦ <b id="quest-title">DER ERSTE SKG</b><em id="quest-count">1/5</em></span><p id="quest-objective">Triff Johannes am Weinstand.</p></div></aside>
+          <aside class="market-card"><p class="eyebrow" id="location-kicker">Hauptmarkt · Trier</p><h2>Freitag, 19:47</h2><div class="market-rule"></div><p><span class="status-dot"></span><span id="zone-mood">Golden Hour · lebendiger Abend</span></p><div class="quest-brief"><span>✦ <b id="quest-title">DER ERSTE SKG</b><em id="quest-count">1/5</em></span><p id="quest-objective">Treffe Johannes am Weinstand.</p></div></aside>
           <div class="market-location" id="location-name">HAUPTMARKT · TRIER</div>
           <div class="market-visitor" id="visitor-count"><b>43</b><span>Menschen auf dem Platz</span></div>
           <button class="route-mini" id="open-map" aria-label="Stadtkarte öffnen"><b>PORTA</b><i></i><b>SIMEON</b><i></i><b>MARKT</b><i></i><b>DOM</b><em id="map-player">●</em></button>
