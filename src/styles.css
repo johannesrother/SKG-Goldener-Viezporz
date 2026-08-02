@@ -6,9 +6,9 @@
 }
 
 * { box-sizing: border-box; }
-html, body, #app { width: 100%; min-width: 320px; min-height: 100%; margin: 0; overflow: hidden; }
+html, body, #app { width: 100%; min-width: 320px; min-height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; }
 body { background: #17211e; }
-button, input { font: inherit; }
+button, input { font: inherit; -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
 
@@ -289,10 +289,23 @@ button { cursor: pointer; }
   .market-card { top: .65rem; left: .65rem; width: 188px; padding: .56rem .62rem; }.market-card h2 { font-size: .95rem; }.market-card p:last-child { font-size: .6rem; }.market-card .quest-brief p { font-size: .63rem; }
   .market-location { top: auto; bottom: 6.8rem; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }.market-visitor { display: none; }
   .route-mini { top: 4.7rem; right: .75rem; transform: scale(.88); transform-origin: top right; }
-  .market-player { bottom: 1rem; left: .75rem; min-width: 150px; padding: .46rem .55rem; }.market-player > i { width: 36px; height: 36px; }.market-player b { font-size: .84rem; }
-  .market-controls { display: none; }.mobile-controls { position: absolute; right: .85rem; bottom: max(.85rem, env(safe-area-inset-bottom)); z-index: 6; display: block; pointer-events: auto; }
-  .mobile-controls .joystick { width: 84px; height: 84px; }.mobile-controls .joystick i { inset: 28px; }
-  .world-interact { display: none; }.mobile-talk { position: absolute; right: 0; bottom: 5.1rem; display: grid; place-items: center; width: 52px; height: 52px; color: #f7d77d; border: 1px solid rgba(240,198,105,.64); border-radius: 50%; background: rgba(10,20,17,.92); box-shadow: 0 8px 22px rgba(0,0,0,.3); font: 1.25rem Georgia,serif; }
+  .market-player { bottom: 7.15rem; left: .75rem; min-width: 150px; padding: .46rem .55rem; }.market-player > i { width: 36px; height: 36px; }.market-player b { font-size: .84rem; }
+  .market-controls { display: none; }.mobile-controls { position: absolute; right: 0; bottom: max(.75rem, env(safe-area-inset-bottom)); left: 0; z-index: 6; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 max(.85rem, env(safe-area-inset-left)) 0 max(.85rem, env(safe-area-inset-right)); pointer-events: none; }
+  .mobile-controls .joystick { width: 98px; height: 98px; pointer-events: auto; background: rgba(8,18,16,.7); box-shadow: 0 10px 28px rgba(0,0,0,.24); }.mobile-controls .joystick::before { inset: 20px; }.mobile-controls .joystick i { inset: 33px; }
+  .world-interact { display: none; }.mobile-talk { display: grid; place-items: center; width: 62px; height: 62px; margin-bottom: .25rem; color: #f7d77d; border: 1px solid rgba(240,198,105,.72); border-radius: 50%; background: rgba(10,20,17,.94); box-shadow: 0 10px 26px rgba(0,0,0,.34); font: 1.45rem Georgia,serif; pointer-events: auto; touch-action: manipulation; }
+  .dialogue-card { bottom: max(.8rem, env(safe-area-inset-bottom)); }.dialogue-next, .dialogue-choice { min-height: 44px; padding: .55rem .72rem; font-size: .82rem; }.dialogue-choice-list .dialogue-choice { min-height: 46px; font-size: .91rem; }
+}
+
+@media (max-width: 430px) {
+  .market-player { display: none; }
+  .market-location { bottom: 7.25rem; max-width: 180px; font-size: .58rem; }
+  .market-card { width: 176px; }
+  .route-mini { transform: scale(.8); }
+}
+
+@media (pointer: coarse) {
+  .menu-choice, .menu-start-button, .menu-utility button, .route-mini, .close-city-map { min-height: 44px; }
+  .menu-choice { min-width: 44px; }
 }
 
 /* Story choices sit in the dialogue flow instead of feeling like a separate quest UI. */
