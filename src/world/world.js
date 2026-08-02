@@ -627,6 +627,74 @@ function addTrierDom(parent, x, z, quality) {
   return dom;
 }
 
+// The Porta is intentionally a broad, dark Roman gate rather than a castle:
+// twin massive sandstone towers, the two traffic arches and a stepped forecourt
+// make it immediately legible as Trier's northern entrance.
+function addPortaNigra(parent, x, z, quality) {
+  const porta = new THREE.Group();
+  porta.name = 'Porta Nigra – Trier';
+  porta.position.set(x, 0, z);
+  const stone = 0x5f5a55;
+  const edge = 0x847c70;
+  for (const towerX of [-5.3, 5.3]) {
+    addBox(porta, { x: towerX, w: 5.2, h: 15.5, d: 6.2, color: stone, roughness: .88 });
+    for (const y of [3.3, 7.2, 11.3]) {
+      addBox(porta, { x: towerX, y, w: 5.5, h: .18, d: 6.5, color: edge });
+      for (const wx of [-.95, .95]) addWindow(porta, towerX + wx, y + 1.25, -3.13, -1, .62, .82, false);
+    }
+    for (let crenel = -1.9; crenel <= 1.9; crenel += .62) addBox(porta, { x: towerX + crenel, y: 15.35, z: -2.45, w: .32, h: .55, d: .34, color: 0x756b61 });
+  }
+  addBox(porta, { y: 5.5, w: 7.8, h: 10, d: 5.8, color: 0x67615a, roughness: .86 });
+  for (const archX of [-2.0, 2.0]) {
+    const opening = new THREE.Mesh(new THREE.BoxGeometry(2.1, 4.65, .2), material(0x1d2426, { roughness: .9 }));
+    opening.position.set(archX, 2.35, -3.0);
+    porta.add(opening);
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(1.05, .22, 8, 20, Math.PI), material(edge, { roughness: .8 }));
+    arch.position.set(archX, 4.65, -3.17);
+    porta.add(arch);
+  }
+  for (let step = 0; step < 4; step += 1) addBox(porta, { y: step * .16, z: -4.25 - step * .22, w: 13.5 + step * .5, h: .16, d: .78, color: 0x8f8170 });
+  addLabel(porta, 'PORTA NIGRA', 0, 6.7, -3.36, 1.12, '#d6ba82');
+  if (quality !== 'low') {
+    const lateSun = new THREE.PointLight(0xffb86e, 1.1, 18, 1.8);
+    lateSun.position.set(-7.5, 7, -9);
+    porta.add(lateSun);
+  }
+  parent.add(porta);
+  return porta;
+}
+
+function addModernBus(parent, x, z) {
+  const bus = new THREE.Group();
+  bus.position.set(x, 0, z);
+  addBox(bus, { w: 2.5, h: 2.2, d: 6.2, color: 0xf2eee3, roughness: .42 });
+  addBox(bus, { y: 1.2, z: -3.13, w: 2.2, h: .66, d: .08, color: 0x284958, metalness: .2, roughness: .28 });
+  for (const side of [-1, 1]) for (const offset of [-1.65, -.55, .55, 1.65]) addCylinder(bus, { x: side * 1.15, z: offset, rTop: .34, rBottom: .34, h: .14, sides: 12, color: 0x202628 });
+  parent.add(bus);
+}
+
+function addSimeonstrasse(parent, quality) {
+  const street = new THREE.Group();
+  street.name = 'Simeonstraße – Porta Nigra zum Hauptmarkt';
+  const paving = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 38), material(0xd6bd94, { map: loadCobblestones(), roughness: .9 }));
+  paving.rotation.x = -Math.PI / 2;
+  paving.position.set(-27, -.012, 35);
+  street.add(paving);
+  const west = [[-32.3, 21.5, 4.4, 4.4, 301, 'EIS'], [-32.3, 27.2, 4.1, 4.8, 302, 'BÄCKEREI'], [-32.3, 33.0, 4.5, 4.3, 303, null], [-32.3, 39.0, 4.1, 4.75, 304, 'TRIER'], [-32.3, 45.0, 4.4, 4.4, 305, 'BUCHLADEN'], [-32.3, 51.0, 4.0, 4.6, 306, null]];
+  const east = [[-21.7, 21.8, 4.2, 4.6, 311, 'SOUVENIRS'], [-21.7, 27.8, 4.5, 4.35, 312, null], [-21.7, 33.5, 4.0, 4.8, 313, 'CAFÉ'], [-21.7, 39.3, 4.45, 4.45, 314, null], [-21.7, 45.3, 4.0, 4.7, 315, 'MARKT'], [-21.7, 51.1, 4.2, 4.25, 316, null]];
+  west.forEach(([bx, bz, w, h, seed, sign]) => createTownhouse(street, { x: bx, z: bz, w, h, d: 3.8, facade: choose([0xe1d3bf, 0xd69c7b, 0xf0c78b, 0xd7c4a9], seed), roof: 0x626a70, seed, rotation: -Math.PI / 2, sign }));
+  east.forEach(([bx, bz, w, h, seed, sign]) => createTownhouse(street, { x: bx, z: bz, w, h, d: 3.8, facade: choose([0xe8ddca, 0xc98570, 0xe8ba87, 0xd3b596], seed), roof: 0x60696f, seed, rotation: Math.PI / 2, sign }));
+  [[-30.5, 24.2], [-23.6, 29.6], [-30.5, 35.7], [-23.7, 42.3], [-30.5, 48.1]].forEach(([px, pz], index) => {
+    addPlanter(street, px, pz, index % 2 ? Math.PI / 2 : 0, choose(PALETTE.flower, index + 640));
+    addLamp(street, px + (index % 2 ? .35 : -.35), pz + .65, false);
+  });
+  [[-30.6, 31.3, .2], [-23.4, 38.4, -.2], [-30.5, 46.4, .1]].forEach(([bx, bz, rot]) => addBicycle(street, bx, bz, rot));
+  addModernBus(street, -36.8, 59.4);
+  addPortaNigra(street, -27, 64.6, quality);
+  parent.add(street);
+  return street;
+}
+
 function addSternstrasse(parent) {
   const street = new THREE.Group();
   street.name = 'Sternstraße – Verbindung zum Domfreihof';
@@ -835,7 +903,7 @@ function createPavingVariation() {
 
 function addPavingVariation(parent) {
   const overlay = new THREE.Mesh(
-    new THREE.PlaneGeometry(84, 76),
+    new THREE.PlaneGeometry(104, 116),
     new THREE.MeshBasicMaterial({ map: createPavingVariation(), transparent: true, opacity: .9, depthWrite: false }),
   );
   overlay.rotation.x = -Math.PI / 2;
@@ -852,7 +920,7 @@ export function createWorld(scene, quality = 'medium') {
   const pigeons = [];
 
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(84, 76),
+    new THREE.PlaneGeometry(104, 116),
     material(0xf3d39d, {
       map: loadCobblestones(),
       roughness: .92,
@@ -862,10 +930,14 @@ export function createWorld(scene, quality = 'medium') {
     }),
   );
   ground.rotation.x = -Math.PI / 2;
-  ground.position.set(12, -.03, 16);
+  ground.position.set(5, -.03, 29);
   ground.receiveShadow = true;
   root.add(ground);
-  addPavingVariation(root).position.set(12, 0, 16);
+  addPavingVariation(root).position.set(5, 0, 29);
+
+  // The first playable sight is the Porta Nigra; the street then leads south
+  // into the existing Hauptmarkt without loading another scene.
+  addSimeonstrasse(root, quality);
 
   // Hauptmarkt façade sequence: St. Gangolf, the ornate gables and the Steipe are
   // the visual anchors from the supplied Trier photos. Street gaps form the Brot-
@@ -942,6 +1014,8 @@ export function createWorld(scene, quality = 'medium') {
     [25.9, 29.4, 'photo'], [29.4, 31.6, 'walk'], [33.2, 35.8, 'photo'], [37.2, 38.4, 'tourist'],
     [42.3, 38.6, 'tourist'], [46.4, 41.2, 'talk'], [34.2, 44.1, 'sit'], [47.7, 45.0, 'photo'],
     [39.2, 46.4, 'look'], [43.5, 46.0, 'look'], [31.4, 39.0, 'walk'], [50.1, 39.4, 'bike'],
+    [-28.4, 55.7, 'photo'], [-24.8, 57.0, 'tourist'], [-30.2, 49.2, 'walk'], [-24.4, 44.4, 'shop'],
+    [-29.4, 39.3, 'phone'], [-24.3, 34.7, 'walk'], [-29.8, 29.2, 'talk'], [-24.0, 24.6, 'bike'],
   ];
   const activePlacement = quality === 'low' ? placement.filter((_, index) => index % 2 === 0) : placement;
   activePlacement.forEach(([x, z, mode], index) => {
@@ -949,6 +1023,7 @@ export function createWorld(scene, quality = 'medium') {
       [new THREE.Vector3(-17, -0, -4.8), new THREE.Vector3(-3.4, 0, -4.9), new THREE.Vector3(5.8, 0, -4.2), new THREE.Vector3(18, 0, -3.8)],
       [new THREE.Vector3(-16, 0, 5.3), new THREE.Vector3(-4, 0, 6.5), new THREE.Vector3(7, 0, 5.6), new THREE.Vector3(17, 0, 5.8)],
       [new THREE.Vector3(24.8, 0, 17), new THREE.Vector3(27.5, 0, 24), new THREE.Vector3(27.3, 0, 31), new THREE.Vector3(36, 0, 38)],
+      [new THREE.Vector3(-27, 0, 55), new THREE.Vector3(-27, 0, 44), new THREE.Vector3(-27, 0, 33), new THREE.Vector3(-23, 0, 19)],
     ];
     const citizen = createCitizen(index, {
       mode,
@@ -1027,11 +1102,13 @@ export function createWorld(scene, quality = 'medium') {
     visitorCount: citizens.length,
     update,
     clampPosition(position) {
-      position.x = THREE.MathUtils.clamp(position.x, -20.5, 52);
-      position.z = THREE.MathUtils.clamp(position.z, -11.8, 49);
+      position.x = THREE.MathUtils.clamp(position.x, -38, 52);
+      position.z = THREE.MathUtils.clamp(position.z, -11.8, 73);
       return position;
     },
     getLocation(position) {
+      if (position.x < -18 && position.z > 53.5) return { name: 'Porta Nigra', zone: 'porta' };
+      if (position.x < -18 && position.z > 17) return { name: 'Simeonstraße', zone: 'simeonstrasse' };
       if (position.z > 34 || (position.x > 32 && position.z > 31)) return { name: 'Domfreihof', zone: 'domfreihof' };
       if (position.x > 20 && position.z > 13) return { name: 'Sternstraße', zone: 'sternstrasse' };
       return { name: 'Hauptmarkt', zone: 'hauptmarkt' };
